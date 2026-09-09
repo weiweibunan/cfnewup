@@ -20,7 +20,8 @@ let 禁用优选 = false;
 let 启用地区匹配 = true;
 let 当前工作器地区 = '';
 let 手动工作器地区 = '';
-let 优选地址源 = '';
+const 默认优选源 = 'https://raw.githubusercontent.com/LancelotRar/best-cf-ips/main/best-cf-ipv4.txt,https://raw.githubusercontent.com/LancelotRar/best-cf-domains/main/best-cf-domain.txt';
+let 优选地址源 = 默认优选源;
 let 自定义路径 = '';
 let 启用明文 = true;
 // 启用ECH功能（true启用，false禁用）
@@ -50,7 +51,7 @@ const 配置默认值 = {
   d: '',
   p: '',
   yx: '',
-  yxURL: '',
+  yxURL: 默认优选源,
   s: 'cfadmin88:K9xR2vP8mQ4wF7tL3bZ1@107.172.138.49:40001',
   ena: 'no',
   epd: 'yes',
@@ -62,7 +63,7 @@ const 配置默认值 = {
   dkby: 'no',
   yxby: '',
   ipv4: 'yes',
-  ipv6: 'yes',
+  ipv6: 'no',
   ispMobile: 'yes',
   ispUnicom: 'yes',
   ispTelecom: 'yes'
@@ -642,7 +643,7 @@ export default {
       if (!启用明文) {
         启用明文 = true;
       }
-      优选地址源 = 获取配置文本值('yxURL', 配置默认值.yxURL, 本地值734.yxURL || 本地值734.YXURL);
+      优选地址源 = 获取配置文本值('yxURL', 配置默认值.yxURL, 本地值734.yxURL || 本地值734.YXURL) || 默认优选源;
       自定义路径 = 获取配置文本值('d', 配置默认值.d, 本地值734.d || 本地值734.D);
       const 网址698 = new URL(请求735.url);
       if (网址698.pathname.includes('/api/config')) {
@@ -2150,25 +2151,23 @@ async function 处理订阅请求(请求507, 用户506, 网址505 = null) {
       await 添加节点列表来源列表(域名列表);
     }
     if (启用优选地址) {
-      if (!优选地址源) {
-        try {
-          const 值地址列表490 = await 获取值地址列表();
-          if (值地址列表490.length > 0) {
-            await 添加节点列表来源列表(值地址列表490);
-          }
-        } catch (错误489) {
-          if (!当前工作器地区) {
-            当前工作器地区 = 'CF';
-          }
-          const 值备用地址488 = await 获取值备用地址(当前工作器地区);
-          if (值备用地址488) {
-            回退地址 = 值备用地址488.domain + ':' + 值备用地址488.port;
-            const 备用列表487 = [{
-              ip: 值备用地址488.domain,
-              isp: 解码64('UHJveHlJUC0=') + 当前工作器地区
-            }];
-            await 添加节点列表来源列表(备用列表487);
-          }
+      try {
+        const 值地址列表490 = await 获取值地址列表();
+        if (值地址列表490.length > 0) {
+          await 添加节点列表来源列表(值地址列表490);
+        }
+      } catch (错误489) {
+        if (!当前工作器地区) {
+          当前工作器地区 = 'CF';
+        }
+        const 值备用地址488 = await 获取值备用地址(当前工作器地区);
+        if (值备用地址488) {
+          回退地址 = 值备用地址488.domain + ':' + 值备用地址488.port;
+          const 备用列表487 = [{
+            ip: 值备用地址488.domain,
+            isp: 解码64('UHJveHlJUC0=') + 当前工作器地区
+          }];
+          await 添加节点列表来源列表(备用列表487);
         }
       }
     }
@@ -2364,11 +2363,9 @@ async function 获取值地址列表() {
     ctcc: '电信',
     cucc: '联通',
     cmcc: '移动',
-    bgp: '多线',
-    ipv6: 'IPv6'
+    bgp: '多线'
   };
   const 值4已启用 = 获取配置值('ipv4', '') === '' || 获取配置值('ipv4', 'yes') !== 'no';
-  const 值6已启用 = 获取配置值('ipv6', '') === '' || 获取配置值('ipv6', 'yes') !== 'no';
   const 值值432 = 获取配置值('ispMobile', '') === '' || 获取配置值('ispMobile', 'yes') !== 'no';
   const 值值431 = 获取配置值('ispUnicom', '') === '' || 获取配置值('ispUnicom', 'yes') !== 'no';
   const 值值430 = 获取配置值('ispTelecom', '') === '' || 获取配置值('ispTelecom', 'yes') !== 'no';
@@ -2387,9 +2384,7 @@ async function 获取值地址列表() {
     if (!分组集合434) return 缓存值地址列表 || [];
     const 结果列表433 = [];
     for (const 分组名434 of Object.keys(分组线路映射)) {
-      const 是否值6434 = 分组名434 === 'ipv6';
-      if (是否值6434 && !值6已启用) continue;
-      if (!是否值6434 && !值4已启用) continue;
+      if (!值4已启用) continue;
       const 线路名434 = 分组线路映射[分组名434];
       if (线路名434 === '移动' && !值值432) continue;
       if (线路名434 === '联通' && !值值431) continue;
@@ -2398,7 +2393,7 @@ async function 获取值地址列表() {
       const 条目列表434 = 分组434 && Array.isArray(分组434.info) ? 分组434.info : [];
       for (const 条目434 of 条目列表434) {
         const 地址434 = 规范化节点主机(条目434 && 条目434.ip);
-        if (!地址434) continue;
+        if (!地址434 || 地址434.includes(':') || 地址434.startsWith('[')) continue;
         结果列表433.push({
           isp: 线路名434,
           ip: 地址434,
@@ -3894,7 +3889,7 @@ async function 处理订阅值(请求241, 用户240 = null) {
                                             <span style="font-size: 1rem;">IPv4</span>
                                         </label>
                                         <label style="display: inline-flex; align-items: center; cursor: pointer; color: #00f0ff;">
-                                            <input type="checkbox" id="ipv6Enabled" checked style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
+                                            <input type="checkbox" id="ipv6Enabled" style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
                                             <span style="font-size: 1rem;">IPv6</span>
                                         </label>
                                     </div>
@@ -4487,7 +4482,7 @@ function 应用配置到界面(配置) {
   写入开关值('epi', 配置.epi, true);
   写入开关值('egi', 配置.egi, true);
   写入开关值('ipv4Enabled', 配置.ipv4, true);
-  写入开关值('ipv6Enabled', 配置.ipv6, true);
+  写入开关值('ipv6Enabled', 配置.ipv6, false);
   写入开关值('ispMobile', 配置.ispMobile, true);
   写入开关值('ispUnicom', 配置.ispUnicom, true);
   写入开关值('ispTelecom', 配置.ispTelecom, true);
@@ -4527,7 +4522,7 @@ function 收集界面配置() {
     dkby: 读取字段值('portControl'),
     yxby: 读取字段值('preferredControl'),
     ipv4: 读取开关值('ipv4Enabled', true),
-    ipv6: 读取开关值('ipv6Enabled', true),
+    ipv6: 读取开关值('ipv6Enabled', false),
     ispMobile: 读取开关值('ispMobile', true),
     ispUnicom: 读取开关值('ispUnicom', true),
     ispTelecom: 读取开关值('ispTelecom', true)
@@ -4951,7 +4946,7 @@ function 处理格式值(本地值114, 偏移 = 0) {
   return 标识;
 }
 async function 获取值解析新地址列表() {
-  const 网址113 = 优选地址源;
+  const 网址113 = (优选地址源 && 优选地址源.trim()) ? 优选地址源.trim() : 默认优选源;
   try {
     const 网址列表112 = 网址113.includes(',') ? 网址113.split(',').map(网址值111 => 网址值111.trim()).filter(网址值 => 网址值) : [网址113];
     const 接口结果列表 = await 获取优选接口(网址列表112, '443', 5000);
@@ -4961,8 +4956,10 @@ async function 获取值解析新地址列表() {
       for (const 项目109 of 接口结果列表) {
         const 本地值108 = 项目109.match(正则);
         if (本地值108) {
+          const 主机 = 规范化节点主机(本地值108[1]);
+          if (!主机 || 主机.includes(':') || 主机.startsWith('[')) continue;
           结果列表110.push({
-            ip: 规范化节点主机(本地值108[1]),
+            ip: 主机,
             port: parseInt(本地值108[2] || '443', 10),
             name: 本地值108[3]?.trim() || 本地值108[1]
           });
@@ -4978,11 +4975,13 @@ async function 获取值解析新地址列表() {
     const 值正则 = /^([^:]+):(\d+)#(.*)$/;
     for (const 行103 of 行列表104) {
       const 值行 = 行103.trim();
-      if (!值行) continue;
+      if (!值行 || 值行.startsWith('#') || 值行.startsWith('//')) continue;
       const 本地值102 = 值行.match(值正则);
       if (本地值102) {
+        const 主机 = 本地值102[1];
+        if (!主机 || 主机.includes(':') || 主机.startsWith('[')) continue;
         结果列表105.push({
-          ip: 本地值102[1],
+          ip: 主机,
           port: parseInt(本地值102[2], 10),
           name: 本地值102[3].trim() || 本地值102[1]
         });
@@ -5349,7 +5348,7 @@ function 更新配置值() {
   启用代理降级 = 降级控制值 === 'no';
   仅走代理 = 降级控制值 === 'only';
   自定义路径 = 有效配置.d || '';
-  优选地址源 = 有效配置.yxURL || '';
+  优选地址源 = 有效配置.yxURL || 默认优选源;
   回退地址 = 有效配置.p ? 有效配置.p.trim() : '';
   代理5配置 = 有效配置.s || '';
   if (代理5配置) {
@@ -5512,15 +5511,22 @@ async function 获取优选接口(网址列表, 默认端口 = '443', 超时 = 3
       const 六版地址模式 = /^[^\[\]]*:[^\[\]]*:[^\[\]]/;
       if (!是否值) {
         行列表.forEach(行13 => {
+          if (行13.startsWith('#') || 行13.startsWith('//')) return;
           const 井号索引 = 行13.indexOf('#');
-          const [主机部分, 备注] = 井号索引 > -1 ? [行13.substring(0, 井号索引), 行13.substring(井号索引)] : [行13, ''];
+          const [主机部分, 备注] = 井号索引 > -1 ? [行13.substring(0, 井号索引).trim(), 行13.substring(井号索引)] : [行13.trim(), ''];
+          if (!主机部分) return;
           let 是否有端口 = false;
+          let 纯主机 = 主机部分;
           if (主机部分.startsWith('[')) {
-            是否有端口 = /\]:(\d+)$/.test(主机部分);
+            return;
           } else {
             const 值索引 = 主机部分.lastIndexOf(':');
-            是否有端口 = 值索引 > -1 && /^\d+$/.test(主机部分.substring(值索引 + 1));
+            if (值索引 > -1 && /^\d+$/.test(主机部分.substring(值索引 + 1))) {
+              是否有端口 = true;
+              纯主机 = 主机部分.substring(0, 值索引);
+            }
           }
+          if (纯主机.includes(':')) return;
           const 端口12 = new URL(网址).searchParams.get('port') || 默认端口;
           结果列表.add(是否有端口 ? 行13 : `${主机部分}:${端口12}${备注}`);
         });
@@ -5533,8 +5539,9 @@ async function 获取优选接口(网址列表, 默认端口 = '443', 超时 = 3
           const 备注索引 = 头部列表.findIndex(头值 => 头值.includes('地区') || 头值.includes('备注') || 头值.includes('数据中心'));
           数据行列表.forEach(行9 => {
             const 列列表8 = 行9.split(',').map(乙值 => 乙值.trim());
-            const 包裹地址6 = 六版地址模式.test(列列表8[地址索引10]) ? `[${列列表8[地址索引10]}]` : 列列表8[地址索引10];
-            结果列表.add(`${包裹地址6}:${列列表8[端口索引]}#${列列表8[备注索引]}`);
+            const 原始地址 = 列列表8[地址索引10];
+            if (!原始地址 || 六版地址模式.test(原始地址) || 原始地址.includes(':') || 原始地址.startsWith('[')) return;
+            结果列表.add(`${原始地址}:${列列表8[端口索引]}#${列列表8[备注索引]}`);
           });
         } else if (头部列表.some(头值5 => 头值5.includes('IP')) && 头部列表.some(头值4 => 头值4.includes('延迟')) && 头部列表.some(头值3 => 头值3.includes('下载速度'))) {
           const 地址索引 = 头部列表.findIndex(头值2 => 头值2.includes('IP'));
@@ -5543,8 +5550,9 @@ async function 获取优选接口(网址列表, 默认端口 = '443', 超时 = 3
           const 端口 = new URL(网址).searchParams.get('port') || 默认端口;
           数据行列表.forEach(行 => {
             const 列列表 = 行.split(',').map(丙值 => 丙值.trim());
-            const 包裹地址 = 六版地址模式.test(列列表[地址索引]) ? `[${列列表[地址索引]}]` : 列列表[地址索引];
-            结果列表.add(`${包裹地址}:${端口}#CF优选 ${列列表[延迟索引]}ms ${列列表[速度索引]}MB/s`);
+            const 原始地址 = 列列表[地址索引];
+            if (!原始地址 || 六版地址模式.test(原始地址) || 原始地址.includes(':') || 原始地址.startsWith('[')) return;
+            结果列表.add(`${原始地址}:${端口}#CF优选 ${列列表[延迟索引]}ms ${列列表[速度索引]}MB/s`);
           });
         }
       }
