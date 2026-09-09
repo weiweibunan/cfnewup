@@ -1,0 +1,12 @@
+{
+  "name": "cfnewup",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:check": "node scripts/build.mjs --check",
+    "test": "node --test tests/*.test.mjs",
+    "check": "npm run build:check && node --check _worker.js && npm test"
+  }
+}
