@@ -204,77 +204,7 @@ function 取官方直连地址() {
     port: 443
   };
 }
-let 备用地址列表 = [{
-  domain: 解码64('UHJveHlJUC5ISy5DTUxpdXNzc3MubmV0'),
-  region: 'HK',
-  regionCode: 'HK',
-  port: 443
-}, {
-  domain: 解码64('UHJveHlJUC5VUy5DTUxpdXNzc3MubmV0'),
-  region: 'US',
-  regionCode: 'US',
-  port: 443
-}, {
-  domain: 解码64('UHJveHlJUC5TRy5DTUxpdXNzc3MubmV0'),
-  region: 'SG',
-  regionCode: 'SG',
-  port: 443
-}, {
-  domain: 解码64('UHJveHlJUC5KUC5DTUxpdXNzc3MubmV0'),
-  region: 'JP',
-  regionCode: 'JP',
-  port: 443
-}, {
-  domain: 解码64('UHJveHlJUC5LUi5DTUxpdXNzc3MubmV0'),
-  region: 'KR',
-  regionCode: 'KR',
-  port: 443
-}, {
-  domain: 解码64('UHJveHlJUC5ERS5DTUxpdXNzc3MubmV0'),
-  region: 'DE',
-  regionCode: 'DE',
-  port: 443
-}, {
-  domain: 解码64('UHJveHlJUC5TRS5DTUxpdXNzc3MubmV0'),
-  region: 'SE',
-  regionCode: 'SE',
-  port: 443
-}, {
-  domain: 解码64('UHJveHlJUC5OTC5DTUxpdXNzc3MubmV0'),
-  region: 'NL',
-  regionCode: 'NL',
-  port: 443
-}, {
-  domain: 解码64('UHJveHlJUC5GSS5DTUxpdXNzc3MubmV0'),
-  region: 'FI',
-  regionCode: 'FI',
-  port: 443
-}, {
-  domain: 解码64('UHJveHlJUC5HQi5DTUxpdXNzc3MubmV0'),
-  region: 'GB',
-  regionCode: 'GB',
-  port: 443
-}, {
-  domain: 解码64('UHJveHlJUC5PcmFjbGUuY21saXVzc3NzLm5ldA=='),
-  region: 'Oracle',
-  regionCode: 'Oracle',
-  port: 443
-}, {
-  domain: 解码64('UHJveHlJUC5EaWdpdGFsT2NlYW4uQ01MaXVzc3NzLm5ldA=='),
-  region: 'DigitalOcean',
-  regionCode: 'DigitalOcean',
-  port: 443
-}, {
-  domain: 解码64('UHJveHlJUC5WdWx0ci5DTUxpdXNzc3MubmV0'),
-  region: 'Vultr',
-  regionCode: 'Vultr',
-  port: 443
-}, {
-  domain: 解码64('UHJveHlJUC5NdWx0YWNvbS5DTUxpdXNzc3MubmV0'),
-  region: 'Multacom',
-  regionCode: 'Multacom',
-  port: 443
-}];
+let 备用地址列表 = [];
 const 直连域名列表 = [{
   name: "cloudflare.182682.xyz",
   domain: "cloudflare.182682.xyz"
@@ -361,22 +291,20 @@ const 传输下载尾部 = 512;
 const 传输下载延迟 = 0;
 const 传输上传包大小 = 16 * 1024;
 const 传输上传队列上限 = 256 * 1024;
-const 传输连接竞速数 = 2;
+const 传输连接竞速数 = 1;
 const 首字节超时 = 1200;
 const 共享解码器 = new TextDecoder();
 const 唯一标识字节缓存 = new Map();
+const 用户UUID正则 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const IPv4正则 = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+const IPv6正则 = /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
+const IPv6压缩正则 = /^::1$|^::$|^(?:[0-9a-fA-F]{1,4}:)*::(?:[0-9a-fA-F]{1,4}:)*[0-9a-fA-F]{1,4}$/;
+
 function 是否有效格式(字符串) {
-  const 用户正则 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  return 用户正则.test(字符串);
+  return 用户UUID正则.test(字符串);
 }
 function 是否有效地址(地址792) {
-  const 值4正则 = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-  if (值4正则.test(地址792)) return true;
-  const 值6正则 = /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
-  if (值6正则.test(地址792)) return true;
-  const 值6值正则 = /^::1$|^::$|^(?:[0-9a-fA-F]{1,4}:)*::(?:[0-9a-fA-F]{1,4}:)*[0-9a-fA-F]{1,4}$/;
-  if (值6值正则.test(地址792)) return true;
-  return false;
+  return IPv4正则.test(地址792) || IPv6正则.test(地址792) || IPv6压缩正则.test(地址792);
 }
 function 创建节点命名器(跳过 = false) {
   // 如果配置了 yxURL，则跳过编号
@@ -610,7 +538,7 @@ function 解析地址值端口(输入) {
 export default {
   async fetch(请求735, 本地值734, 本地值733) {
     try {
-      const 是否网页套接字 = 请求735.headers.get('Upgrade') === atob('d2Vic29ja2V0');
+      const 是否网页套接字 = 请求735.headers.get('Upgrade') === 'websocket';
       const 是否值732 = 请求735.method === 'POST';
       const 请求网址731 = new URL(请求735.url);
       const 路径值730 = 请求网址731.pathname.split('/').filter(参数值729 => 参数值729);
@@ -837,7 +765,7 @@ export default {
           status: 500
         });
       }
-      if (请求735.headers.get('Upgrade') === atob('d2Vic29ja2V0')) {
+      if (请求735.headers.get('Upgrade') === 'websocket') {
         return await 处理网页套接字请求(请求735);
       }
       if (请求735.method === 'GET') {
