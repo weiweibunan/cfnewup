@@ -33,9 +33,6 @@ let 自定义域名系统 = 'https://223.5.5.5/dns-query';
 // 自定义ECH域名（默认：cloudflare-ech.com）
 let 自定义加密客户端问候域名 = 'cloudflare-ech.com';
 let 自定义应用层协议协商 = '';
-let 订阅转换接口 = 解码64('aHR0cHM6Ly91cmwudjEubWsvc3Vi');
-// 远程配置URL（硬编码）
-const 远程配置网址 = 'https://raw.githubusercontent.com/byJoey/test/refs/heads/main/tist.ini';
 let 启用优选域名 = true; // 优选域名默认关闭
 let 启用优选地址 = true;
 let 启用仓库优选 = true;
@@ -61,8 +58,6 @@ const 配置默认值 = {
   yx: '',
   yxURL: '',
   s: 'cfadmin88:K9xR2vP8mQ4wF7tL3bZ1@107.172.138.49:40001',
-  homepage: '',
-  scu: 解码64('aHR0cHM6Ly91cmwudjEubWsvc3Vi'),
   ena: 'no',
   epd: 'yes',
   epi: 'yes',
@@ -145,8 +140,6 @@ function 获取环境配置快照(环境值 = {}) {
     yx: ['yx', 'YX'],
     yxURL: ['yxURL', 'YXURL', 'YX_URL'],
     s: ['s', 'S'],
-    homepage: ['homepage', 'HOMEPAGE'],
-    scu: ['scu', 'SCU'],
     ena: ['ena', 'ENA'],
     epd: ['epd', 'EPD'],
     epi: ['epi', 'EPI'],
@@ -637,7 +630,6 @@ export default {
       启用木马 = 获取配置开关值('et', false, 本地值734.et);
       传输路径 = 获取配置文本值('tp', 配置默认值.tp, 本地值734.tp);
       启用扩展传输 = 获取配置开关值('ex', false, 本地值734.ex);
-      订阅转换接口 = 获取配置文本值('scu', 配置默认值.scu, 本地值734.scu);
       启用优选域名 = 获取配置开关值('epd', true, 本地值734.epd || 本地值734.EPD);
       启用优选地址 = 获取配置开关值('epi', true, 本地值734.epi || 本地值734.EPI);
       启用仓库优选 = 获取配置开关值('egi', true, 本地值734.egi || 本地值734.EGI);
@@ -769,154 +761,7 @@ export default {
         return await 处理网页套接字请求(请求735);
       }
       if (请求735.method === 'GET') {
-        // 处理 /{UUID}/region 或 /{自定义路径}/region
-        if (网址698.pathname.endsWith('/region')) {
-          const 路径部分列表683 = 网址698.pathname.split('/').filter(参数值682 => 参数值682);
-          if (路径部分列表683.length === 2 && 路径部分列表683[1] === 'region') {
-            const 路径值681 = 路径部分列表683[0];
-            let 是否有效680 = false;
-            if (自定义路径 && 自定义路径.trim()) {
-              // 使用自定义路径
-              const 清理自定义路径679 = 自定义路径.trim().startsWith('/') ? 自定义路径.trim().substring(1) : 自定义路径.trim();
-              是否有效680 = 路径值681 === 清理自定义路径679;
-            } else {
-              // 使用UUID路径
-              是否有效680 = 是否有效格式(路径值681) && 路径值681 === 认证令牌;
-            }
-            if (是否有效680) {
-              const 本地值678 = 获取配置值('p', 本地值734.p || 本地值734.P);
-              const 手动地区677 = 获取配置值('wk', 本地值734.wk || 本地值734.WK);
-              if (手动地区677 && 手动地区677.trim()) {
-                return new Response(JSON.stringify({
-                  region: 手动地区677.trim().toUpperCase(),
-                  detectionMethod: '手动指定地区',
-                  manualRegion: 手动地区677.trim().toUpperCase(),
-                  timestamp: new Date().toISOString()
-                }), {
-                  headers: {
-                    'Content-Type': 'application/json'
-                  }
-                });
-              } else if (本地值678 && 本地值678.trim()) {
-                return new Response(JSON.stringify({
-                  region: 'CUSTOM',
-                  detectionMethod: 解码64('6Ieq5a6a5LmJUHJveHlJUOaooeW8jw=='),
-                  ci: 本地值678,
-                  timestamp: new Date().toISOString()
-                }), {
-                  headers: {
-                    'Content-Type': 'application/json'
-                  }
-                });
-              } else {
-                // wk 留空 = 官方直连，用内置地址而不是探测地区
-                return new Response(JSON.stringify({
-                  region: 'CF',
-                  detectionMethod: 解码64('5a6Y5pa555u06L+e'),
-                  timestamp: new Date().toISOString()
-                }), {
-                  headers: {
-                    'Content-Type': 'application/json'
-                  }
-                });
-              }
-            } else {
-              return new Response(JSON.stringify({
-                error: '访问被拒绝',
-                message: '路径验证失败'
-              }), {
-                status: 403,
-                headers: {
-                  'Content-Type': 'application/json'
-                }
-              });
-            }
-          }
-        }
-
-        // 处理 /{UUID}/test-api 或 /{自定义路径}/test-api
-        if (网址698.pathname.endsWith('/test-api')) {
-          const 路径部分列表676 = 网址698.pathname.split('/').filter(参数值675 => 参数值675);
-          if (路径部分列表676.length === 2 && 路径部分列表676[1] === 'test-api') {
-            const 路径值 = 路径部分列表676[0];
-            let 是否有效 = false;
-            if (自定义路径 && 自定义路径.trim()) {
-              // 使用自定义路径
-              const 清理自定义路径674 = 自定义路径.trim().startsWith('/') ? 自定义路径.trim().substring(1) : 自定义路径.trim();
-              是否有效 = 路径值 === 清理自定义路径674;
-            } else {
-              // 使用UUID路径
-              是否有效 = 是否有效格式(路径值) && 路径值 === 认证令牌;
-            }
-            if (是否有效) {
-              try {
-                return new Response(JSON.stringify({
-                  detectedRegion: 'CF',
-                  message: 'API测试完成',
-                  timestamp: new Date().toISOString()
-                }), {
-                  headers: {
-                    'Content-Type': 'application/json'
-                  }
-                });
-              } catch (错误673) {
-                return new Response(JSON.stringify({
-                  error: 错误673.message,
-                  message: 'API测试失败'
-                }), {
-                  status: 500,
-                  headers: {
-                    'Content-Type': 'application/json'
-                  }
-                });
-              }
-            } else {
-              return new Response(JSON.stringify({
-                error: '访问被拒绝',
-                message: '路径验证失败'
-              }), {
-                status: 403,
-                headers: {
-                  'Content-Type': 'application/json'
-                }
-              });
-            }
-          }
-        }
         if (网址698.pathname === '/') {
-          // 检查是否有自定义首页URL配置
-          const 自定义值 = 获取配置值('homepage', 本地值734.homepage || 本地值734.HOMEPAGE);
-          if (自定义值 && 自定义值.trim()) {
-            try {
-              // 从自定义URL获取内容
-              const 值响应 = await fetch(自定义值.trim(), {
-                method: 'GET',
-                headers: {
-                  'User-Agent': 请求735.headers.get('User-Agent') || 'Mozilla/5.0',
-                  'Accept': 请求735.headers.get('Accept') || '*/*',
-                  'Accept-Language': 请求735.headers.get('Accept-Language') || 'en-US,en;q=0.9'
-                },
-                redirect: 'follow'
-              });
-              if (值响应.ok) {
-                // 获取响应内容
-                const 内容类型672 = 值响应.headers.get('Content-Type') || 'text/html; charset=utf-8';
-                const 内容671 = await 值响应.text();
-
-                // 返回自定义首页内容
-                return new Response(内容671, {
-                  status: 值响应.status,
-                  headers: {
-                    'Content-Type': 内容类型672,
-                    'Cache-Control': 'no-cache, no-store, must-revalidate'
-                  }
-                });
-              }
-            } catch (错误670) {
-              // 如果获取失败，继续使用默认终端页面
-              console.error('获取自定义首页失败:', 错误670);
-            }
-          }
           // 优先检查Cookie中的语言设置
           const 凭据头部669 = 请求735.headers.get('Cookie') || '';
           let 语言来源凭据668 = null;
@@ -3637,16 +3482,8 @@ async function 处理订阅值(请求241, 用户240 = null) {
       title: 解码64('6K6i6ZiF5Lit5b+D'),
       subtitle: '多客户端支持 • 智能优选 • 一键生成',
       selectClient: '[ 选择客户端 ]',
-      systemStatus: '[ 系统状态 ]',
       configManagement: '[ 配置管理 ]',
       relatedLinks: '[ 相关链接 ]',
-      checking: '检测中...',
-      workerRegion: 'Worker地区: ',
-      detectionMethod: '检测方式: ',
-      proxyIPStatus: 解码64('UHJveHlJUOeKtuaAgTog'),
-      currentIP: '当前使用IP: ',
-      regionMatch: '地区匹配: ',
-      selectionLogic: '选择逻辑: ',
       kvStatusChecking: '检测KV状态中...',
       kvEnabled: '✅ KV存储已启用，可以使用配置管理功能',
       kvDisabled: '⚠️ KV存储未启用或未配置',
@@ -3662,37 +3499,9 @@ async function 处理订阅值(请求241, 用户240 = null) {
       customIP: 解码64('6Ieq5a6a5LmJUHJveHlJUCAocCk6'),
       preferredIPs: '优选IP列表 (yx):',
       preferredIPsURL: '优选IP来源URL (yxURL):',
-      latencyTest: '延迟测试',
-      latencyTestIP: '测试IP/域名:',
-      latencyTestIPPlaceholder: '输入IP或域名，多个用逗号分隔',
-      latencyTestPort: '端口:',
-      startTest: '开始测试',
-      stopTest: '停止测试',
-      testResult: '测试结果:',
-      addToYx: '添加到优选列表',
-      addSelectedToYx: '添加选中项到优选列表',
-      selectAll: '全选',
-      deselectAll: '取消全选',
-      testingInProgress: '测试中...',
-      testComplete: '测试完成',
-      latencyMs: '延迟',
-      timeout: '超时',
-      ipSource: 'IP来源:',
-      manualInput: '手动输入',
-      cfRandomIP: 'CF随机IP',
-      urlFetch: 'URL获取',
-      randomCount: '生成数量:',
-      fetchURL: '获取URL:',
-      fetchURLPlaceholder: '输入优选IP的URL地址',
-      generateIP: '生成IP',
-      fetchIP: '获取IP',
       socks5Config: 解码64('5Luj55CG6YWN572uIChzKTo='),
-      customHomepage: '自定义首页URL (homepage):',
-      customHomepagePlaceholder: '例如: https://example.com',
-      customHomepageHint: '设置自定义URL作为首页伪装。访问根路径 / 时将显示该URL的内容。留空则显示默认终端页面。',
       saveConfig: '保存配置',
       advancedControl: '高级控制',
-      subscriptionConverter: 解码64('6K6i6ZiF6L2s5o2i5Zyw5Z2AOg=='),
       builtinPreferred: '内置优选类型:',
       enablePreferredDomain: '启用优选域名',
       enablePreferredIP: '启用优选 IP',
@@ -3725,8 +3534,6 @@ async function 处理订阅值(请求241, 用户240 = null) {
       alpnDefault: '默认（留空，由客户端协商）',
       alpnHint: '仅添加到 TLS 节点链接参数；留空则不写 alpn。',
       saveProtocol: 解码64('5L+d5a2Y5Y2P6K6u6YWN572u'),
-      subscriptionConverterPlaceholder: '默认: https://url.v1.mk/sub',
-      subscriptionConverterHint: 解码64('6K6i6ZiF6L2s5o2i5bey5YaF6YOo5a6e546w77yM5peg6ZyA5aSW6YOoIEFQSeOAguatpOmhueS7heS9nOWFvOWuueS/neeVme+8jOWPr+eVmeepuuOAgg=='),
       builtinPreferredHint: 解码64('5o6n5Yi26K6i6ZiF5Lit5YyF5ZCr5ZOq5Lqb5YaF572u5LyY6YCJ6IqC54K544CC6buY6K6k5YWo6YOo5ZCv55So44CC'),
       apiEnabledDefault: '默认（关闭API）',
       apiEnabledYes: '开启API管理',
@@ -3761,25 +3568,7 @@ async function 处理订阅值(请求241, 用户240 = null) {
       githubProject: 'GitHub 项目',
       优选工具: '优选工具',
       autoDetectClient: '自动识别',
-      selectionLogicText: '同地区 → 邻近地区 → 其他地区',
       customIPDisabledHint: 解码64('5L2/55So6Ieq5a6a5LmJUHJveHlJUOaXtu+8jOWcsOWMuumAieaLqeW3suemgeeUqA=='),
-      customIPMode: 解码64('6Ieq5a6a5LmJUHJveHlJUOaooeW8jyAocOWPmOmHj+WQr+eUqCk='),
-      customIPModeDesc: '自定义IP模式 (已禁用地区匹配)',
-      usingCustomProxyIP: 解码64('5L2/55So6Ieq5a6a5LmJUHJveHlJUDog'),
-      customIPConfig: ' (p变量配置)',
-      customIPModeDisabled: '自定义IP模式，地区选择已禁用',
-      manualRegion: '手动指定地区',
-      manualRegionDesc: ' (手动指定)',
-      proxyIPAvailable: 解码64('MTAvMTAg5Y+v55SoIChQcm94eUlQ5Z+f5ZCN6aKE6K6+5Y+v55SoKQ=='),
-      smartSelection: '智能就近选择中',
-      sameRegionIP: '同地区IP可用 (1个)',
-      cloudflareDetection: 解码64('5a6Y5pa555u06L+e'),
-      detectionFailed: '检测失败',
-      apiTestResult: 'API检测结果: ',
-      apiTestTime: '检测时间: ',
-      apiTestFailed: 'API检测失败: ',
-      unknownError: '未知错误',
-      apiTestError: 'API测试失败: ',
       kvNotConfigured: 'KV存储未配置，无法使用配置管理功能。\\n\\n请在Cloudflare Workers中:\\n1. 创建KV命名空间\\n2. 绑定环境变量 C\\n3. 重新部署代码',
       kvNotEnabled: 'KV存储未配置',
       kvCheckFailed: 'KV存储检测失败: 响应格式错误',
@@ -3790,16 +3579,8 @@ async function 处理订阅值(请求241, 用户240 = null) {
       title: 'مرکز اشتراک',
       subtitle: 'پشتیبانی چند کلاینت • انتخاب هوشمند • تولید یک کلیکی',
       selectClient: '[ انتخاب کلاینت ]',
-      systemStatus: '[ وضعیت سیستم ]',
       configManagement: '[ مدیریت تنظیمات ]',
       relatedLinks: '[ لینک‌های مرتبط ]',
-      checking: 'در حال بررسی...',
-      workerRegion: 'منطقه Worker: ',
-      detectionMethod: 'روش تشخیص: ',
-      proxyIPStatus: 解码64('2YjYtti524zYqiBQcm94eUlQOiA='),
-      currentIP: 'IP فعلی: ',
-      regionMatch: 'تطبیق منطقه: ',
-      selectionLogic: 'منطق انتخاب: ',
       kvStatusChecking: 'در حال بررسی وضعیت KV...',
       kvEnabled: '✅ ذخیره‌سازی KV فعال است، می‌توانید از مدیریت تنظیمات استفاده کنید',
       kvDisabled: '⚠️ ذخیره‌سازی KV فعال نیست یا پیکربندی نشده است',
@@ -3823,37 +3604,9 @@ async function 处理订阅值(请求241, 用户240 = null) {
       customIP: 解码64('UHJveHlJUCDYs9mB2KfYsdi024wgKHApOg=='),
       preferredIPs: 'لیست IP ترجیحی (yx):',
       preferredIPsURL: 'URL منبع IP ترجیحی (yxURL):',
-      latencyTest: 'تست تاخیر',
-      latencyTestIP: 'IP/دامنه تست:',
-      latencyTestIPPlaceholder: 'IP یا دامنه وارد کنید، چند مورد با کاما جدا شوند',
-      latencyTestPort: 'پورت:',
-      startTest: 'شروع تست',
-      stopTest: 'توقف تست',
-      testResult: 'نتیجه تست:',
-      addToYx: 'افزودن به لیست ترجیحی',
-      addSelectedToYx: 'افزودن موارد انتخاب شده',
-      selectAll: 'انتخاب همه',
-      deselectAll: 'لغو انتخاب',
-      testingInProgress: 'در حال تست...',
-      testComplete: 'تست کامل شد',
-      latencyMs: 'تاخیر',
-      timeout: 'زمان تمام شد',
-      ipSource: 'منبع IP:',
-      manualInput: 'ورودی دستی',
-      cfRandomIP: 'IP تصادفی CF',
-      urlFetch: 'دریافت از URL',
-      randomCount: 'تعداد تولید:',
-      fetchURL: 'URL دریافت:',
-      fetchURLPlaceholder: 'آدرس URL لیست IP را وارد کنید',
-      generateIP: 'تولید IP',
-      fetchIP: 'دریافت IP',
       socks5Config: 解码64('2KrZhti424zZhdin2Kog2b7YsdmI2qnYs9uMIChzKTo='),
-      customHomepage: 'URL صفحه اصلی سفارشی (homepage):',
-      customHomepagePlaceholder: 'مثال: https://example.com',
-      customHomepageHint: 'تنظیم URL سفارشی به عنوان استتار صفحه اصلی. هنگام دسترسی به مسیر اصلی / محتوای این URL نمایش داده می‌شود. اگر خالی بگذارید صفحه ترمینال پیش‌فرض نمایش داده می‌شود.',
       saveConfig: 'ذخیره تنظیمات',
       advancedControl: 'کنترل پیشرفته',
-      subscriptionConverter: 'آدرس تبدیل اشتراک:',
       builtinPreferred: 'نوع ترجیحی داخلی:',
       enablePreferredDomain: 'فعال‌سازی دامنه ترجیحی',
       enablePreferredIP: 'فعال‌سازی IP ترجیحی',
@@ -3878,8 +3631,6 @@ async function 处理订阅值(请求241, 用户240 = null) {
       alpnDefault: 'پیش‌فرض (خالی، مذاکره توسط کلاینت)',
       alpnHint: 'فقط به لینک‌های TLS اضافه می‌شود؛ اگر خالی باشد alpn نوشته نمی‌شود.',
       saveProtocol: 'ذخیره تنظیمات پروتکل',
-      subscriptionConverterPlaceholder: 'پیش‌فرض: https://url.v1.mk/sub',
-      subscriptionConverterHint: 'تبدیل اشتراک به صورت داخلی پیاده‌سازی شده است و نیازی به API خارجی ندارد. این فیلد فقط برای سازگاری حفظ شده و می‌توان آن را خالی گذاشت.',
       builtinPreferredHint: 'کنترل اینکه کدام گره‌های ترجیحی داخلی در اشتراک گنجانده شوند. به طور پیش‌فرض همه فعال هستند.',
       apiEnabledDefault: 'پیش‌فرض (بستن API)',
       apiEnabledYes: 'فعال‌سازی مدیریت API',
@@ -3914,25 +3665,7 @@ async function 处理订阅值(请求241, 用户240 = null) {
       githubProject: 'پروژه GitHub',
       优选工具: 'ابزار ترجیح IP',
       autoDetectClient: 'تشخیص خودکار',
-      selectionLogicText: 'هم‌منطقه → منطقه مجاور → سایر مناطق',
       customIPDisabledHint: 解码64('2YfZhtqv2KfZhSDYp9iz2KrZgdin2K/ZhyDYp9iyIFByb3h5SVAg2LPZgdin2LHYtNuM2Iwg2KfZhtiq2K7Yp9ioINmF2YbYt9mC2Ycg2LrbjNix2YHYudin2YQg2KfYs9iq'),
-      customIPMode: 解码64('2K3Yp9mE2KogUHJveHlJUCDYs9mB2KfYsdi024wgKNmF2KrYutuM2LEgcCDZgdi52KfZhCDYp9iz2Kop'),
-      customIPModeDesc: 'حالت IP سفارشی (تطبیق منطقه غیرفعال است)',
-      usingCustomProxyIP: 解码64('2KfYs9iq2YHYp9iv2Ycg2KfYsiBQcm94eUlQINiz2YHYp9ix2LTbjDog'),
-      customIPConfig: ' (پیکربندی متغیر p)',
-      customIPModeDisabled: 'حالت IP سفارشی، انتخاب منطقه غیرفعال است',
-      manualRegion: 'تعیین منطقه دستی',
-      manualRegionDesc: ' (تعیین دستی)',
-      proxyIPAvailable: 解码64('MTAvMTAg2K/YsSDYr9iz2KrYsdizICjYr9in2YXZhtmHINm+24zYtOKAjNmB2LHYtiBQcm94eUlQINiv2LEg2K/Ys9iq2LHYsyDYp9iz2Kop'),
-      smartSelection: 'انتخاب هوشمند نزدیک در حال انجام است',
-      sameRegionIP: 'IP هم‌منطقه در دسترس است (1)',
-      cloudflareDetection: 'اتصال مستقیم رسمی',
-      detectionFailed: 'تشخیص ناموفق',
-      apiTestResult: 'نتیجه تشخیص API: ',
-      apiTestTime: 'زمان تشخیص: ',
-      apiTestFailed: 'تشخیص API ناموفق: ',
-      unknownError: 'خطای ناشناخته',
-      apiTestError: 'تست API ناموفق: ',
       kvNotConfigured: 'ذخیره‌سازی KV پیکربندی نشده است، نمی‌توانید از عملکرد مدیریت تنظیمات استفاده کنید.\\n\\nلطفا در Cloudflare Workers:\\n1. فضای نام KV ایجاد کنید\\n2. متغیر محیطی C را پیوند دهید\\n3. کد را دوباره مستقر کنید',
       kvNotEnabled: 'ذخیره‌سازی KV پیکربندی نشده است',
       kvCheckFailed: 'بررسی ذخیره‌سازی KV ناموفق: خطای فرمت پاسخ',
@@ -4085,35 +3818,6 @@ async function 处理订阅值(请求241, 用户240 = null) {
                 display: none;
             }
             .subscription-url.active { display: block; }
-            #systemStatus {
-                background: #1e293b !important;
-                border: 1px solid var(--card-border) !important;
-                border-radius: 12px !important;
-                box-shadow: none !important;
-                padding: 18px 20px !important;
-                display: grid !important;
-                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)) !important;
-                gap: 12px !important;
-            }
-            #systemStatus div {
-                color: var(--text-main) !important;
-                font-family: inherit !important;
-                font-size: 13px !important;
-                text-shadow: none !important;
-                margin: 0 !important;
-                padding: 8px 12px !important;
-                background: rgba(15, 23, 42, 0.6) !important;
-                border-radius: 8px !important;
-                border: 1px solid rgba(255, 255, 255, 0.04) !important;
-            }
-            #systemStatus div:first-child {
-                grid-column: 1 / -1 !important;
-                background: transparent !important;
-                border: none !important;
-                color: var(--primary) !important;
-                font-weight: 600 !important;
-                padding: 0 !important;
-            }
             #kvStatus {
                 background: #1e293b !important;
                 border: 1px solid var(--card-border) !important;
@@ -4309,7 +4013,6 @@ async function 处理订阅值(请求241, 用户240 = null) {
                 .title { font-size: 24px; }
                 .client-grid { grid-template-columns: repeat(2, 1fr); }
                 .cp-action-bar { bottom: 16px; right: 16px; }
-                #systemStatus { grid-template-columns: 1fr !important; }
             }
         </style>
     </head>
@@ -4343,19 +4046,6 @@ async function 处理订阅值(请求241, 用户240 = null) {
                     <button class="client-btn" onclick="生成客户端链接(atob('djJyYXk='), 'Shadowrocket')">Shadowrocket</button>
                 </div>
                 <div class="subscription-url" id="clientSubscriptionUrl"></div>
-            </div>
-            <div class="card">
-                    <h2 class="card-title">${翻译值.systemStatus}</h2>
-                <div id="systemStatus" style="margin: 20px 0; padding: 15px; background: rgba(8, 4, 28, 0.8); border: 2px solid #00f0ff; box-shadow: 0 0 20px rgba(0, 240, 255, 0.3), inset 0 0 15px rgba(0, 240, 255, 0.1); position: relative; overflow: hidden;">
-                        <div style="color: #00f0ff; margin-bottom: 15px; font-weight: bold; text-shadow: 0 0 5px #00f0ff;">[ ${翻译值.checking} ]</div>
-                        <div id="regionStatus" style="margin: 8px 0; color: #00f0ff; font-family: 'Courier New', monospace; text-shadow: 0 0 3px #00f0ff;">${翻译值.workerRegion}${翻译值.checking}</div>
-                        <div id="geoInfo" style="margin: 8px 0; color: #7aa9c4; font-family: 'Courier New', monospace; font-size: 0.9rem; text-shadow: 0 0 3px #7aa9c4;">${翻译值.detectionMethod}${翻译值.checking}</div>
-                        <div id="backupStatus" style="margin: 8px 0; color: #00f0ff; font-family: 'Courier New', monospace; text-shadow: 0 0 3px #00f0ff;">${翻译值.proxyIPStatus}${翻译值.checking}</div>
-                        <div id="currentIP" style="margin: 8px 0; color: #00f0ff; font-family: 'Courier New', monospace; text-shadow: 0 0 3px #00f0ff;">${翻译值.currentIP}${翻译值.checking}</div>
-                        <div id="echStatus" style="margin: 8px 0; color: #00f0ff; font-family: 'Courier New', monospace; text-shadow: 0 0 3px #00f0ff; font-size: 0.9rem;">ECH状态: ${翻译值.checking}</div>
-                        <div id="regionMatch" style="margin: 8px 0; color: #00f0ff; font-family: 'Courier New', monospace; text-shadow: 0 0 3px #00f0ff;">${翻译值.regionMatch}${翻译值.checking}</div>
-                        <div id="selectionLogic" style="margin: 8px 0; color: #7aa9c4; font-family: 'Courier New', monospace; font-size: 0.9rem; text-shadow: 0 0 3px #7aa9c4;">${翻译值.selectionLogic}${翻译值.selectionLogicText}</div>
-                </div>
             </div>
             <div class="card" id="configCard" style="display: none;">
                     <h2 class="card-title">${翻译值.configManagement}</h2>
@@ -4445,11 +4135,6 @@ async function 处理订阅值(请求241, 用户240 = null) {
                             </div>
                         </div>
                         <div style="margin-bottom: 15px;">
-                                <label style="display: block; margin-bottom: 8px; color: #00f0ff; font-weight: bold; text-shadow: 0 0 3px #00f0ff;">${翻译值.customHomepage}</label>
-                                <input type="text" id="customHomepage" placeholder="${翻译值.customHomepagePlaceholder}" style="width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.8); border: 2px solid #00f0ff; color: #00f0ff; font-family: 'Courier New', monospace; font-size: 14px;">
-                                <small style="color: #7aa9c4; font-size: 0.85rem;">${翻译值.customHomepageHint}</small>
-                        </div>
-                        <div style="margin-bottom: 15px;">
                                 <label style="display: block; margin-bottom: 8px; color: #00f0ff; font-weight: bold; text-shadow: 0 0 3px #00f0ff;">${翻译值.customPath}</label>
                                 <input type="text" id="customPath" placeholder="${是否值236 ? 'مثال: /mypath یا خالی بگذارید تا از UUID استفاده شود' : '例如: /mypath 或留空使用 UUID'}" style="width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.8); border: 2px solid #00f0ff; color: #00f0ff; font-family: 'Courier New', monospace; font-size: 14px;">
                                 <small style="color: #7aa9c4; font-size: 0.85rem;">${是否值236 ? 解码64('2YXYs9uM2LEg2KfYtNiq2LHYp9qpINiz2YHYp9ix2LTbjC4g2Kfar9ixINiu2KfZhNuMINio2q/YsNin2LHbjNivINin2LIgVVVJRCDYqNmHINi52YbZiNin2YYg2YXYs9uM2LEg2KfYs9iq2YHYp9iv2Ycg2YXbjOKAjNi02YjYry4=') : 解码64('6Ieq5a6a5LmJ6K6i6ZiF6Lev5b6E44CC55WZ56m65YiZ5L2/55SoIFVVSUQg5L2c5Li66Lev5b6E44CC')}</small>
@@ -4475,11 +4160,6 @@ async function 处理订阅值(请求241, 用户240 = null) {
 
                     <h3 style="color: #00f0ff; margin: 20px 0 15px 0; font-size: 1.2rem;">${翻译值.advancedControl}</h3>
                     <form id="advancedConfigForm" style="margin-bottom: 20px;">
-                        <div style="margin-bottom: 15px;">
-                                <label style="display: block; margin-bottom: 8px; color: #00f0ff; font-weight: bold; text-shadow: 0 0 3px #00f0ff;">${翻译值.subscriptionConverter}</label>
-                                <input type="text" id="scu" placeholder="${翻译值.subscriptionConverterPlaceholder}" style="width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.8); border: 2px solid #00f0ff; color: #00f0ff; font-family: 'Courier New', monospace; font-size: 14px;">
-                                <small style="color: #7aa9c4; font-size: 0.85rem;">${翻译值.subscriptionConverterHint}</small>
-                        </div>
                         <div style="margin-bottom: 15px;">
                                 <label style="display: block; margin-bottom: 8px; color: #00f0ff; font-weight: bold; text-shadow: 0 0 3px #00f0ff;">${翻译值.builtinPreferred}</label>
                             <div style="padding: 15px; background: rgba(15, 3, 40, 0.6); border: 1px solid #00f0ff; border-radius: 5px;">
@@ -4625,11 +4305,6 @@ async function 处理订阅值(请求241, 用户240 = null) {
             </button>
         </div>
         <script>
-// 地址从服务器配置注入
-var 订阅转换网址 = "${订阅转换接口}";
-// 远程配置URL（硬编码）
-var 远程配置网址 = "${远程配置网址}";
-
 // 翻译对象
 const 本地值20215 = {
   zh: {
@@ -4964,265 +4639,6 @@ function 创建矩阵雨() {
     });
   }, 110);
 }
-async function 检查系统状态() {
-  try {
-    const 云墙状态 = document.getElementById('cfStatus');
-    const 地区状态 = document.getElementById('regionStatus');
-    const 值值20179 = document.getElementById('geoInfo');
-    const 备用状态 = document.getElementById('backupStatus');
-    const 当前地址 = document.getElementById('currentIP');
-    const 地区值 = document.getElementById('regionMatch');
-
-    // 获取当前语言设置（优先从Cookie/localStorage读取）
-    function 获取凭据20178(名称20177) {
-      const 值20176 = '; ' + document.cookie;
-      const 部分列表20175 = 值20176.split('; ' + 名称20177 + '=');
-      if (部分列表20175.length === 2) return 部分列表20175.pop().split(';').shift();
-      return null;
-    }
-    const 浏览器语言20174 = navigator.language || navigator.userLanguage || '';
-    const 已保存语言20173 = localStorage.getItem('preferredLanguage') || 获取凭据20178('preferredLanguage');
-    let 是否值20172 = false;
-    if (已保存语言20173 === 'fa' || 已保存语言20173 === 'fa-IR') {
-      是否值20172 = true;
-    } else if (已保存语言20173 === 'zh' || 已保存语言20173 === 'zh-CN') {
-      是否值20172 = false;
-    } else {
-      是否值20172 = 浏览器语言20174.includes('fa') || 浏览器语言20174.includes('fa-IR');
-    }
-    const 本地值20171 = {
-      zh: {
-        workerRegion: 'Worker地区: ',
-        detectionMethod: '检测方式: ',
-        proxyIPStatus: '${解码64('UHJveHlJUOeKtuaAgTog')}',
-        currentIP: '当前使用IP: ',
-        regionMatch: '地区匹配: ',
-        regionNames: {
-          'CF': '${解码64('8J+MkCDlrpjmlrnnm7Tov54=')}',
-          'HK': '🇭🇰 香港',
-          'US': '🇺🇸 美国',
-          'SG': '🇸🇬 新加坡',
-          'JP': '🇯🇵 日本',
-          'KR': '🇰🇷 韩国',
-          'DE': '🇩🇪 德国',
-          'SE': '🇸🇪 瑞典',
-          'NL': '🇳🇱 荷兰',
-          'FI': '🇫🇮 芬兰',
-          'GB': '🇬🇧 英国'
-        },
-        customIPMode: '${解码64('6Ieq5a6a5LmJUHJveHlJUOaooeW8jyAocOWPmOmHj+WQr+eUqCk=')}',
-        customIPModeDesc: '自定义IP模式 (已禁用地区匹配)',
-        usingCustomProxyIP: '${解码64('5L2/55So6Ieq5a6a5LmJUHJveHlJUDog')}',
-        customIPConfig: ' (p变量配置)',
-        customIPModeDisabled: '自定义IP模式，地区选择已禁用',
-        manualRegion: '手动指定地区',
-        manualRegionDesc: ' (手动指定)',
-        proxyIPAvailable: '${解码64('MTAvMTAg5Y+v55SoIChQcm94eUlQ5Z+f5ZCN6aKE6K6+5Y+v55SoKQ==')}',
-        smartSelection: '智能就近选择中',
-        sameRegionIP: '同地区IP可用 (1个)',
-        cloudflareDetection: '${解码64('5a6Y5pa555u06L+e')}',
-        detectionFailed: '检测失败',
-        unknown: '未知'
-      },
-      fa: {
-        workerRegion: 'منطقه Worker: ',
-        detectionMethod: 'روش تشخیص: ',
-        proxyIPStatus: '${解码64('2YjYtti524zYqiBQcm94eUlQOiA=')}',
-        currentIP: 'IP فعلی: ',
-        regionMatch: 'تطبیق منطقه: ',
-        regionNames: {
-          'CF': '🌐 مستقیم رسمی',
-          'HK': '🇭🇰 هنگ کنگ',
-          'US': '🇺🇸 آمریکا',
-          'SG': '🇸🇬 سنگاپور',
-          'JP': '🇯🇵 ژاپن',
-          'KR': '🇰🇷 کره جنوبی',
-          'DE': '🇩🇪 آلمان',
-          'SE': '🇸🇪 سوئد',
-          'NL': '🇳🇱 هلند',
-          'FI': '🇫🇮 فنلاند',
-          'GB': '🇬🇧 بریتانیا'
-        },
-        customIPMode: '${解码64('2K3Yp9mE2KogUHJveHlJUCDYs9mB2KfYsdi024wgKNmF2KrYutuM2LEgcCDZgdi52KfZhCDYp9iz2Kop')}',
-        customIPModeDesc: 'حالت IP سفارشی (تطبیق منطقه غیرفعال است)',
-        usingCustomProxyIP: '${解码64('2KfYs9iq2YHYp9iv2Ycg2KfYsiBQcm94eUlQINiz2YHYp9ix2LTbjDog')}',
-        customIPConfig: ' (پیکربندی متغیر p)',
-        customIPModeDisabled: 'حالت IP سفارشی، انتخاب منطقه غیرفعال است',
-        manualRegion: 'تعیین منطقه دستی',
-        manualRegionDesc: ' (تعیین دستی)',
-        proxyIPAvailable: '${解码64('MTAvMTAg2K/YsSDYr9iz2KrYsdizICjYr9in2YXZhtmHINm+24zYtOKAjNmB2LHYtiBQcm94eUlQINiv2LEg2K/Ys9iq2LHYsyDYp9iz2Kop')}',
-        smartSelection: 'انتخاب هوشمند نزدیک در حال انجام است',
-        sameRegionIP: 'IP هم‌منطقه در دسترس است (1)',
-        cloudflareDetection: 'اتصال مستقیم رسمی',
-        detectionFailed: 'تشخیص ناموفق',
-        unknown: 'ناشناخته'
-      }
-    };
-    const 翻译值20170 = 本地值20171[是否值20172 ? 'fa' : 'zh'];
-    let 值地区20169 = 'US'; // 默认值
-    let 是否自定义地址值 = false;
-    let 是否手动地区值 = false;
-    try {
-      const 响应20168 = await fetch(window.location.pathname + '/region');
-      const 数据20167 = await 响应20168.json();
-      if (数据20167.region === 'CUSTOM') {
-        是否自定义地址值 = true;
-        值地区20169 = 'CUSTOM';
-
-        // 获取自定义IP的详细信息
-        const 自定义地址值 = 数据20167.ci || 翻译值20170.unknown;
-        值值20179.innerHTML = 翻译值20170.detectionMethod + '<span style="color: #ffb400;">⚙️ ' + 翻译值20170.customIPMode + '</span>';
-        地区状态.innerHTML = 翻译值20170.workerRegion + '<span style="color: #ffb400;">🔧 ' + 翻译值20170.customIPModeDesc + '</span>';
-
-        // 显示自定义IP配置状态，包含具体IP
-        if (备用状态) 备用状态.innerHTML = 翻译值20170.proxyIPStatus + '<span style="color: #ffb400;">🔧 ' + 翻译值20170.usingCustomProxyIP + 自定义地址值 + '</span>';
-        if (当前地址) 当前地址.innerHTML = 翻译值20170.currentIP + '<span style="color: #ffb400;">✅ ' + 自定义地址值 + 翻译值20170.customIPConfig + '</span>';
-        if (地区值) 地区值.innerHTML = 翻译值20170.regionMatch + '<span style="color: #ffb400;">⚠️ ' + 翻译值20170.customIPModeDisabled + '</span>';
-        return; // 提前返回，不执行后续的地区匹配逻辑
-      } else if (数据20167.detectionMethod === '手动指定地区' || 数据20167.detectionMethod === 'تعیین منطقه دستی') {
-        是否手动地区值 = true;
-        值地区20169 = 数据20167.region;
-        值值20179.innerHTML = 翻译值20170.detectionMethod + '<span style="color: #00b380;">' + 翻译值20170.manualRegion + '</span>';
-        地区状态.innerHTML = 翻译值20170.workerRegion + '<span style="color: #00ff9d;">🎯 ' + 翻译值20170.regionNames[值地区20169] + 翻译值20170.manualRegionDesc + '</span>';
-
-        // 显示配置状态而不是检测状态
-        if (备用状态) 备用状态.innerHTML = 翻译值20170.proxyIPStatus + '<span style="color: #00ff9d;">✅ ' + 翻译值20170.proxyIPAvailable + '</span>';
-        if (当前地址) 当前地址.innerHTML = 翻译值20170.currentIP + '<span style="color: #00ff9d;">✅ ' + 翻译值20170.smartSelection + '</span>';
-        if (地区值) 地区值.innerHTML = 翻译值20170.regionMatch + '<span style="color: #00ff9d;">✅ ' + 翻译值20170.sameRegionIP + '</span>';
-        return; // 提前返回，不执行后续的地区匹配逻辑
-      } else if (数据20167.region && 翻译值20170.regionNames[数据20167.region]) {
-        值地区20169 = 数据20167.region;
-      }
-      值值20179.innerHTML = 翻译值20170.detectionMethod + '<span style="color: #00ff9d;">' + 翻译值20170.cloudflareDetection + '</span>';
-    } catch (事件值20166) {
-      值值20179.innerHTML = 翻译值20170.detectionMethod + '<span style="color: #ff3860;">' + 翻译值20170.detectionFailed + '</span>';
-    }
-    地区状态.innerHTML = 翻译值20170.workerRegion + '<span style="color: #00ff9d;">✅ ' + 翻译值20170.regionNames[值地区20169] + '</span>';
-
-    // 直接显示配置状态，不再进行检测
-    if (备用状态) {
-      备用状态.innerHTML = 翻译值20170.proxyIPStatus + '<span style="color: #00ff9d;">✅ ' + 翻译值20170.proxyIPAvailable + '</span>';
-    }
-    if (当前地址) {
-      当前地址.innerHTML = 翻译值20170.currentIP + '<span style="color: #00ff9d;">✅ ' + 翻译值20170.smartSelection + '</span>';
-    }
-    if (地区值) {
-      地区值.innerHTML = 翻译值20170.regionMatch + '<span style="color: #00ff9d;">✅ ' + 翻译值20170.sameRegionIP + '</span>';
-    }
-  } catch (错误20165) {
-    function 获取凭据20164(名称20163) {
-      const 值20162 = '; ' + document.cookie;
-      const 部分列表20161 = 值20162.split('; ' + 名称20163 + '=');
-      if (部分列表20161.length === 2) return 部分列表20161.pop().split(';').shift();
-      return null;
-    }
-    const 浏览器语言20160 = navigator.language || navigator.userLanguage || '';
-    const 已保存语言20159 = localStorage.getItem('preferredLanguage') || 获取凭据20164('preferredLanguage');
-    let 是否值20158 = false;
-    if (已保存语言20159 === 'fa' || 已保存语言20159 === 'fa-IR') {
-      是否值20158 = true;
-    } else {
-      是否值20158 = 浏览器语言20160.includes('fa') || 浏览器语言20160.includes('fa-IR');
-    }
-    const 本地值20157 = {
-      zh: {
-        workerRegion: 'Worker地区: ',
-        detectionMethod: '检测方式: ',
-        proxyIPStatus: '${解码64('UHJveHlJUOeKtuaAgTog')}',
-        currentIP: '当前使用IP: ',
-        regionMatch: '地区匹配: ',
-        detectionFailed: '检测失败'
-      },
-      fa: {
-        workerRegion: 'منطقه Worker: ',
-        detectionMethod: 'روش تشخیص: ',
-        proxyIPStatus: '${解码64('2YjYtti524zYqiBQcm94eUlQOiA=')}',
-        currentIP: 'IP فعلی: ',
-        regionMatch: 'تطبیق منطقه: ',
-        detectionFailed: 'تشخیص ناموفق'
-      }
-    };
-    const 翻译值20156 = 本地值20157[是否值20158 ? 'fa' : 'zh'];
-    document.getElementById('regionStatus').innerHTML = 翻译值20156.workerRegion + '<span style="color: #ff3860;">❌ ' + 翻译值20156.detectionFailed + '</span>';
-    document.getElementById('geoInfo').innerHTML = 翻译值20156.detectionMethod + '<span style="color: #ff3860;">❌ ' + 翻译值20156.detectionFailed + '</span>';
-    document.getElementById('backupStatus').innerHTML = 翻译值20156.proxyIPStatus + '<span style="color: #ff3860;">❌ ' + 翻译值20156.detectionFailed + '</span>';
-    document.getElementById('currentIP').innerHTML = 翻译值20156.currentIP + '<span style="color: #ff3860;">❌ ' + 翻译值20156.detectionFailed + '</span>';
-    document.getElementById('regionMatch').innerHTML = 翻译值20156.regionMatch + '<span style="color: #ff3860;">❌ ' + 翻译值20156.detectionFailed + '</span>';
-  }
-}
-async function 测试接口() {
-  try {
-    function 获取凭据20155(名称20154) {
-      const 值20153 = '; ' + document.cookie;
-      const 部分列表20152 = 值20153.split('; ' + 名称20154 + '=');
-      if (部分列表20152.length === 2) return 部分列表20152.pop().split(';').shift();
-      return null;
-    }
-    const 浏览器语言20151 = navigator.language || navigator.userLanguage || '';
-    const 已保存语言20150 = localStorage.getItem('preferredLanguage') || 获取凭据20155('preferredLanguage');
-    let 是否值20149 = false;
-    if (已保存语言20150 === 'fa' || 已保存语言20150 === 'fa-IR') {
-      是否值20149 = true;
-    } else {
-      是否值20149 = 浏览器语言20151.includes('fa') || 浏览器语言20151.includes('fa-IR');
-    }
-    const 本地值20148 = {
-      zh: {
-        apiTestResult: 'API检测结果: ',
-        apiTestTime: '检测时间: ',
-        apiTestFailed: 'API检测失败: ',
-        unknownError: '未知错误',
-        apiTestError: 'API测试失败: '
-      },
-      fa: {
-        apiTestResult: 'نتیجه تشخیص API: ',
-        apiTestTime: 'زمان تشخیص: ',
-        apiTestFailed: 'تشخیص API ناموفق: ',
-        unknownError: 'خطای ناشناخته',
-        apiTestError: 'تست API ناموفق: '
-      }
-    };
-    const 翻译值20147 = 本地值20148[是否值20149 ? 'fa' : 'zh'];
-    const 响应20146 = await fetch(window.location.pathname + '/test-api');
-    const 数据20145 = await 响应20146.json();
-    if (数据20145.detectedRegion) {
-      显示提示(翻译值20147.apiTestResult + 数据20145.detectedRegion + '\\n' + 翻译值20147.apiTestTime + 数据20145.timestamp, 'info', {
-        duration: 5000
-      });
-    } else {
-      显示提示(翻译值20147.apiTestFailed + (数据20145.error || 翻译值20147.unknownError), 'error', {
-        duration: 4500
-      });
-    }
-  } catch (错误20144) {
-    function 获取凭据20143(名称20142) {
-      const 值20141 = '; ' + document.cookie;
-      const 部分列表20140 = 值20141.split('; ' + 名称20142 + '=');
-      if (部分列表20140.length === 2) return 部分列表20140.pop().split(';').shift();
-      return null;
-    }
-    const 浏览器语言20139 = navigator.language || navigator.userLanguage || '';
-    const 已保存语言20138 = localStorage.getItem('preferredLanguage') || 获取凭据20143('preferredLanguage');
-    let 是否值20137 = false;
-    if (已保存语言20138 === 'fa' || 已保存语言20138 === 'fa-IR') {
-      是否值20137 = true;
-    } else {
-      是否值20137 = 浏览器语言20139.includes('fa') || 浏览器语言20139.includes('fa-IR');
-    }
-    const 本地值20136 = {
-      zh: {
-        apiTestError: 'API测试失败: '
-      },
-      fa: {
-        apiTestError: 'تست API ناموفق: '
-      }
-    };
-    const 翻译值20135 = 本地值20136[是否值20137 ? 'fa' : 'zh'];
-    显示提示(翻译值20135.apiTestError + 错误20144.message, 'error', {
-      duration: 4500
-    });
-  }
-}
 
 // 配置管理相关函数
 async function 检查键值状态() {
@@ -5387,7 +4803,6 @@ function 应用配置到界面(配置) {
   写入字段值('customDNS', 配置.customDNS);
   写入字段值('customECHDomain', 配置.customECHDomain);
   写入字段值('alpn', 配置.alpn);
-  写入字段值('scu', 配置.scu);
   写入开关值('ena', 配置.ena, false);
   写入开关值('epd', 配置.epd, true);
   写入开关值('epi', 配置.epi, true);
@@ -5402,7 +4817,6 @@ function 应用配置到界面(配置) {
   写入字段值('yx', 配置.yx);
   写入字段值('yxURL', 配置.yxURL);
   写入字段值('socksConfig', 配置.s);
-  写入字段值('customHomepage', 配置.homepage);
   写入字段值('apiEnabled', 配置.ae);
   写入字段值('regionMatching', 配置.rm);
   写入字段值('downgradeControl', 配置.qj);
@@ -5427,8 +4841,6 @@ function 收集界面配置() {
     yx: 读取字段值('yx'),
     yxURL: 读取字段值('yxURL'),
     s: 读取字段值('socksConfig'),
-    homepage: 读取字段值('customHomepage'),
-    scu: 读取字段值('scu'),
     ena: 读取开关值('ena', false),
     epd: 读取开关值('epd', true),
     epi: 读取开关值('epi', true),
@@ -5623,7 +5035,6 @@ async function 重置全部配置() {
           tp: '',
           customDNS: '',
           customECHDomain: '',
-          scu: '',
           epd: '',
           epi: '',
           egi: '',
@@ -5632,7 +5043,6 @@ async function 重置全部配置() {
           ispMobile: '',
           ispUnicom: '',
           ispTelecom: '',
-          homepage: '',
           alpn: ''
         })
       });
@@ -5669,35 +5079,9 @@ async function 重置全部配置() {
     }
   }
 }
-async function 检查加密问候状态() {
-  const 加密客户端问候状态值 = document.getElementById('echStatus');
-  if (!加密客户端问候状态值) return;
-  try {
-    const 当前网址 = window.location.href;
-    const 订阅网址 = 当前网址 + '/sub';
-    加密客户端问候状态值.innerHTML = 'ECH状态: <span style="color: #ffb400;">检测中...</span>';
-    const 响应20095 = await fetch(订阅网址, {
-      method: 'GET',
-      headers: {
-        'Accept': 'text/plain'
-      }
-    });
-    const 加密客户端问候状态头部 = 响应20095.headers.get('X-ECH-Status');
-    const 加密客户端问候配置长度 = 响应20095.headers.get('X-ECH-Config-Length');
-    if (加密客户端问候状态头部 === 'ENABLED') {
-      加密客户端问候状态值.innerHTML = 'ECH状态: <span style="color: #00ff9d;">✅ 已启用' + (加密客户端问候配置长度 ? ' (配置长度: ' + 加密客户端问候配置长度 + ')' : '') + '</span>';
-    } else {
-      加密客户端问候状态值.innerHTML = 'ECH状态: <span style="color: #ffb400;">⚠️ 未启用</span>';
-    }
-  } catch (错误20094) {
-    加密客户端问候状态值.innerHTML = 'ECH状态: <span style="color: #ff3860;">❌ 检测失败: ' + 错误20094.message + '</span>';
-  }
-}
 document.addEventListener('DOMContentLoaded', function () {
   创建矩阵雨();
-  检查系统状态();
   检查键值状态();
-  检查加密问候状态();
 
   // ECH 开启时自动联动开启仅TLS
   const 加密客户端问候复选框 = document.getElementById('ech');
@@ -6961,7 +6345,6 @@ function 更新配置值() {
   启用木马 = 有效配置.et === 'yes';
   启用扩展传输 = 有效配置.ex === 'yes';
   传输路径 = 有效配置.tp || '';
-  订阅转换接口 = 有效配置.scu || 配置默认值.scu;
   启用优选域名 = 有效配置.epd === 'yes';
   启用优选地址 = 有效配置.epi === 'yes';
   启用仓库优选 = 有效配置.egi === 'yes';
