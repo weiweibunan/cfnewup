@@ -407,7 +407,7 @@ async function 保存键值配置() {
     } catch (忽略值767) {}
     键值配置上次加载 = Date.now();
   } catch (错误766) {
-    throw 错误766;
+    console.error('Save KV config failed:', 错误766);
   }
 }
 function 获取配置值(键765, 默认值 = '') {
@@ -2351,7 +2351,15 @@ async function 计算值摘要(文本434) {
   const 缓冲区434 = await crypto.subtle.digest('MD5', new TextEncoder().encode(文本434));
   return Array.from(new Uint8Array(缓冲区434)).map(字节434 => 字节434.toString(16).padStart(2, '0')).join('');
 }
+let 缓存值地址列表 = null;
+let 缓存值地址过期时间 = 0;
+const 地址列表缓存时长 = 5 * 60 * 1000;
+
 async function 获取值地址列表() {
+  const 现在 = Date.now();
+  if (缓存值地址列表 && 现在 < 缓存值地址过期时间) {
+    return 缓存值地址列表;
+  }
   const 分组线路映射 = {
     ctcc: '电信',
     cucc: '联通',
@@ -2373,10 +2381,10 @@ async function 获取值地址列表() {
         'User-Agent': 'Mozilla/5.0'
       }
     });
-    if (!响应434.ok) return [];
+    if (!响应434.ok) return 缓存值地址列表 || [];
     const 数据434 = await 响应434.json();
     const 分组集合434 = 数据434 && 数据434.data;
-    if (!分组集合434) return [];
+    if (!分组集合434) return 缓存值地址列表 || [];
     const 结果列表433 = [];
     for (const 分组名434 of Object.keys(分组线路映射)) {
       const 是否值6434 = 分组名434 === 'ipv6';
@@ -2398,9 +2406,11 @@ async function 获取值地址列表() {
         });
       }
     }
+    缓存值地址列表 = 结果列表433;
+    缓存值地址过期时间 = 现在 + 地址列表缓存时长;
     return 结果列表433;
   } catch (事件值427) {}
-  return [];
+  return 缓存值地址列表 || [];
 }
 async function 处理网页套接字请求(请求417) {
   // 从请求URL的path query中读取客户端自定义参数
@@ -2443,98 +2453,132 @@ async function 处理网页套接字请求(请求417) {
   };
   let 是否域名系统值 = false;
   let 协议类型 = null;
-  let 值值408 = false;
   let 传输值 = false;
-  const 值队列 = 创建块队列(传输上传包大小, 传输上传队列上限, 传输上传队列上限 >> 8);
+  let 早期队列 = [];
+  let 正在排空早期数据 = false;
+
   const 请求值407 = 请求417.fetcher;
+
   function 处理值远程写入器() {
     try {
       远程连接值409.writer?.releaseLock();
     } catch (忽略值406) {}
     远程连接值409.writer = null;
   }
+
   function 关闭传输() {
     if (传输值) return;
     传输值 = true;
-    值队列.clear();
+    早期队列 = [];
     处理值远程写入器();
     try {
       远程连接值409.socket?.close();
     } catch (忽略值405) {}
     关闭套接字值(值值410);
   }
-  function 处理队列值(块404) {
-    const 数据403 = 处理值值8数组(块404);
-    if (!数据403.byteLength) return true;
-    if (!值队列.sow(数据403)) {
-      关闭传输();
-      return false;
-    }
-    远程连接值409.drainUpload();
-    return true;
-  }
-  async function 处理值值402() {
-    if (值值408 || 传输值 || !远程连接值409.writer) return;
-    值值408 = true;
+
+  async function 排空早期数据() {
+    if (正在排空早期数据 || !远程连接值409.writer || !早期队列.length) return;
+    正在排空早期数据 = true;
     try {
-      for (;;) {
-        if (传输值 || !远程连接值409.writer) break;
-        const [数据401] = 值队列.bundle();
-        if (!数据401) break;
-        await 远程连接值409.writer.write(数据401);
+      while (早期队列.length > 0 && 远程连接值409.writer && !传输值) {
+        const 前置块 = 早期队列.shift();
+        if (前置块 && 前置块.byteLength) {
+          await 远程连接值409.writer.write(前置块);
+        }
       }
-    } catch (忽略值400) {
+    } catch (忽略值) {
       关闭传输();
     } finally {
-      值值408 = false;
-      if (!值队列.empty && !传输值 && 远程连接值409.writer) queueMicrotask(处理值值402);
+      正在排空早期数据 = false;
     }
   }
+
   远程连接值409.drainUpload = () => {
-    if (!值值408 && !值队列.empty && 远程连接值409.writer) queueMicrotask(处理值值402);
+    排空早期数据().catch(() => 关闭传输());
   };
+
   const 值数据399 = 请求417.headers.get(atob('c2VjLXdlYnNvY2tldC1wcm90b2NvbA==')) || '';
   const 本地值398 = 制作值流(值值410, 值数据399);
+
   本地值398.pipeTo(new WritableStream({
     async write(块397) {
       if (传输值) return;
       const 数据396 = 处理值值8数组(块397);
-      if (是否域名系统值) return await 处理值用户数据报(数据396, 值值410, null, 请求值407);
-      if (远程连接值409.socket && 远程连接值409.writer) {
-        if (!处理队列值(数据396)) throw new Error('upload queue overflow');
+      if (!数据396.byteLength) return;
+
+      if (是否域名系统值) {
+        try {
+          await 处理值用户数据报(数据396, 值值410, null, 请求值407);
+        } catch (忽略值) {}
         return;
       }
+
+      if (远程连接值409.writer) {
+        try {
+          if (早期队列.length) await 排空早期数据();
+          if (!传输值 && 远程连接值409.writer) {
+            await 远程连接值409.writer.write(数据396);
+          }
+        } catch (写错误) {
+          关闭传输();
+        }
+        return;
+      }
+
       if (协议类型) {
-        if (!处理队列值(数据396)) throw new Error('upload queue overflow');
+        if (早期队列.length < 128) {
+          早期队列.push(数据396);
+        } else {
+          关闭传输();
+        }
         return;
       }
-      if (!协议类型) {
-        if (启用明文 && 数据396.byteLength >= 24) {
-          const 轻量协议结果 = 解析网页套接字值头部(数据396, 认证令牌);
-          if (!轻量协议结果.hasError) {
-            协议类型 = 解码64('dmxlc3M=');
-            const {
-              addressType: 地址类型395,
-              port: 端口394,
-              hostname: 主机名393,
-              rawIndex: 原始索引,
-              version: 本地值392,
-              isUDP: 是否用户数据报391
-            } = 轻量协议结果;
-            if (是否用户数据报391) {
-              if (端口394 === 53) 是否域名系统值 = true;else throw new Error(错误_仅支持域名系统用户数据报);
+
+      if (启用明文 && 数据396.byteLength >= 24) {
+        const 轻量协议结果 = 解析网页套接字值头部(数据396, 认证令牌);
+        if (!轻量协议结果.hasError) {
+          协议类型 = 解码64('dmxlc3M=');
+          const {
+            addressType: 地址类型395,
+            port: 端口394,
+            hostname: 主机名393,
+            rawIndex: 原始索引,
+            version: 本地值392,
+            isUDP: 是否用户数据报391
+          } = 轻量协议结果;
+
+          if (是否用户数据报391) {
+            if (端口394 === 53) {
+              是否域名系统值 = true;
+            } else {
+              关闭传输();
+              return;
             }
-            const 值头部390 = new Uint8Array([本地值392[0], 0]);
-            const 原始数据389 = 数据396.subarray(原始索引);
-            if (是否域名系统值) return 处理值用户数据报(原始数据389, 值值410, 值头部390, 请求值407);
-            await 处理值值384(地址类型395, 主机名393, 端口394, 原始数据389, 值值410, 值头部390, 远程连接值409, 请求回退416, 实际地区411, 请求值414, 请求代理配置413, 请求值407);
+          }
+
+          const 值头部390 = new Uint8Array([本地值392[0], 0]);
+          const 原始数据389 = 数据396.subarray(原始索引);
+
+          if (是否域名系统值) {
+            try {
+              await 处理值用户数据报(原始数据389, 值值410, 值头部390, 请求值407);
+            } catch (忽略值) {}
             return;
           }
+
+          try {
+            await 处理值值384(地址类型395, 主机名393, 端口394, 原始数据389, 值值410, 值头部390, 远程连接值409, 请求回退416, 实际地区411, 请求值414, 请求代理配置413, 请求值407);
+          } catch (处理错误) {
+            关闭传输();
+          }
+          return;
         }
-        throw new Error('Invalid protocol or authentication failed');
       }
+
+      关闭传输();
     }
-  })).catch(错误385 => {
+  })).catch(() => {
     关闭传输();
   });
   return new Response(null, {
@@ -2652,136 +2696,7 @@ function 拼接值8数组(头部355, 主体354) {
   输出351.set(乙值352, 头值353.byteLength);
   return 输出351;
 }
-function 创建块队列(本地值350, 值值349 = 本地值350, 项目列表上限 = Math.max(1, 值值349 >> 8)) {
-  let 队列 = [];
-  let 头部348 = 0;
-  let 值字节347 = 0;
-  let 值缓冲346 = null;
-  function 处理本地值345() {
-    if (头部348 > 32 && 头部348 * 2 >= 队列.length) {
-      队列 = 队列.slice(头部348);
-      头部348 = 0;
-    }
-  }
-  function 处理本地值344() {
-    if (头部348 >= 队列.length) return null;
-    const 数据343 = 队列[头部348];
-    队列[头部348++] = undefined;
-    值字节347 -= 数据343.byteLength;
-    处理本地值345();
-    return 数据343;
-  }
-  return {
-    get empty() {
-      return 头部348 >= 队列.length;
-    },
-    clear() {
-      队列 = [];
-      头部348 = 0;
-      值字节347 = 0;
-    },
-    sow(数据342) {
-      const 数量值 = 数据342?.byteLength || 0;
-      if (!数量值) return true;
-      if (值字节347 + 数量值 > 值值349 || 队列.length - 头部348 >= 项目列表上限) return false;
-      队列.push(数据342);
-      值字节347 += 数量值;
-      return true;
-    },
-    bundle(数据341 = null) {
-      数据341 ||= 处理本地值344();
-      if (!数据341 || 头部348 >= 队列.length || 数据341.byteLength >= 本地值350) return [数据341, false];
-      let 本地值340 = 数据341.byteLength;
-      let 结束 = 头部348;
-      while (结束 < 队列.length) {
-        const 本地值339 = 队列[结束];
-        const 值值338 = 本地值340 + 本地值339.byteLength;
-        if (值值338 > 本地值350) break;
-        本地值340 = 值值338;
-        结束++;
-      }
-      if (结束 === 头部348) return [数据341, false];
-      const 输出 = 值缓冲346 ||= new Uint8Array(本地值350);
-      输出.set(数据341);
-      let 偏移337 = 数据341.byteLength;
-      while (头部348 < 结束) {
-        const 本地值336 = 队列[头部348];
-        队列[头部348++] = undefined;
-        值字节347 -= 本地值336.byteLength;
-        输出.set(本地值336, 偏移337);
-        偏移337 += 本地值336.byteLength;
-      }
-      处理本地值345();
-      return [输出.subarray(0, 本地值340), true];
-    }
-  };
-}
-function 创建值值(网页套接字335) {
-  const 本地值334 = 传输下载包大小;
-  const 尾部 = 传输下载尾部;
-  const 值值333 = Math.max(4096, 尾部 << 3);
-  let 本地值332 = new Uint8Array(本地值334);
-  let 值字节 = 0;
-  let 计时器 = 0;
-  let 值值331 = false;
-  let 本地值330 = 0;
-  let 值键 = 0;
-  let 值值329 = 0;
-  function 刷新() {
-    if (计时器) clearTimeout(计时器);
-    计时器 = 0;
-    值值331 = false;
-    if (!值字节) return;
-    if (网页套接字335.readyState === 1) 网页套接字335.send(本地值332.subarray(0, 值字节).slice());
-    本地值332 = new Uint8Array(本地值334);
-    值字节 = 0;
-    值值329 = 0;
-  }
-  function 处理本地值() {
-    if (计时器 || 值值331) return;
-    值值331 = true;
-    值键 = 本地值330;
-    queueMicrotask(() => {
-      值值331 = false;
-      if (!值字节 || 计时器) return;
-      if (本地值334 - 值字节 < 尾部) return 刷新();
-      计时器 = setTimeout(() => {
-        计时器 = 0;
-        if (!值字节) return;
-        if (本地值334 - 值字节 < 尾部) return 刷新();
-        if (值值329 < 2 && (本地值330 !== 值键 || 值字节 < 值值333)) {
-          值值329++;
-          值键 = 本地值330;
-          return 处理本地值();
-        }
-        刷新();
-      }, Math.max(传输下载延迟, 1));
-    });
-  }
-  return {
-    send(块328) {
-      const 数据327 = 处理值值8数组(块328);
-      let 偏移326 = 0;
-      const 本地值325 = 数据327.byteLength;
-      if (!本地值325) return;
-      while (偏移326 < 本地值325) {
-        if (!值字节 && 本地值325 - 偏移326 >= 本地值334) {
-          const 大小324 = Math.min(本地值334, 本地值325 - 偏移326);
-          if (网页套接字335.readyState === 1) 网页套接字335.send(偏移326 || 大小324 !== 本地值325 ? 数据327.subarray(偏移326, 偏移326 + 大小324) : 数据327);
-          偏移326 += 大小324;
-          continue;
-        }
-        const 大小323 = Math.min(本地值334 - 值字节, 本地值325 - 偏移326);
-        本地值332.set(数据327.subarray(偏移326, 偏移326 + 大小323), 值字节);
-        值字节 += 大小323;
-        偏移326 += 大小323;
-        本地值330++;
-        if (值字节 === 本地值334 || 本地值334 - 值字节 < 尾部) 刷新();else 处理本地值();
-      }
-    },
-    flush: 刷新
-  };
-}
+
 function 处理打开值套接字(地址322, 端口321, 请求值320 = null) {
   const 目标 = {
     hostname: 地址322,
@@ -2971,7 +2886,6 @@ async function 连接值279(远程套接字, 网页套接字278, 头部数据, �
       }
     }, 首字节超时);
   }
-  const 本地值274 = 创建值值(网页套接字278);
   let 读取器273 = null;
   let 本地值272 = true;
   let 缓冲271 = new ArrayBuffer(传输块大小);
@@ -2989,7 +2903,6 @@ async function 连接值279(远程套接字, 网页套接字278, 头部数据, �
       if (结果269.done) break;
       const 读取值 = 结果269.value;
       let 块268 = 处理值值8数组(读取值);
-      const 值缓冲 = 本地值272 && 读取值?.buffer instanceof ArrayBuffer && 读取值.buffer.byteLength >= 传输块大小 ? 读取值.buffer : new ArrayBuffer(传输块大小);
       if (!块268.byteLength) continue;
       if (!是否有数据) {
         是否有数据 = true;
@@ -2998,28 +2911,18 @@ async function 连接值279(远程套接字, 网页套接字278, 头部数据, �
           首次字节计时器 = null;
         }
       }
-      if (网页套接字278.readyState !== 1) throw new Error(错误_网页套接字未打开);
+      if (网页套接字278.readyState !== 1) break;
       if (头部277) {
         块268 = 拼接值8数组(头部277, 块268);
         头部277 = null;
       }
-      if (块268.byteLength >= 传输块大小 >> 1) {
-        本地值274.flush();
-        网页套接字278.send(块268);
-        if (本地值272) 缓冲271 = new ArrayBuffer(传输块大小);
-      } else {
-        本地值274.send(块268.slice());
-        if (本地值272) 缓冲271 = 值缓冲;
-      }
+      网页套接字278.send(块268);
+      if (本地值272) 缓冲271 = new ArrayBuffer(传输块大小);
     }
-    本地值274.flush();
   } catch (错误267) {
     // 已经触发 retry 时不要关闭 WS（retry 会重新挂载新 socket）
     if (!本地值276) 关闭套接字值(网页套接字278);
   } finally {
-    try {
-      本地值274.flush();
-    } catch (忽略值266) {}
     try {
       读取器273?.releaseLock();
     } catch (忽略值265) {}
@@ -5552,8 +5455,16 @@ async function 解析文本值数组(内容) {
   if (已处理.charAt(已处理.length - 1) == ',') 已处理 = 已处理.slice(0, 已处理.length - 1);
   return 已处理.split(',');
 }
+const 优选接口缓存 = new Map();
+const 优选接口缓存时长 = 5 * 60 * 1000;
 async function 获取优选接口(网址列表, 默认端口 = '443', 超时 = 3000) {
   if (!网址列表?.length) return [];
+  const 缓存键 = 网址列表.join(',') + '_' + 默认端口;
+  const 现在 = Date.now();
+  const 缓存项 = 优选接口缓存.get(缓存键);
+  if (缓存项 && 现在 < 缓存项.expires) {
+    return 缓存项.data;
+  }
   const 结果列表 = new Set();
   await Promise.allSettled(网址列表.map(async 网址 => {
     try {
@@ -5616,14 +5527,12 @@ async function 获取优选接口(网址列表, 默认端口 = '443', 超时 = 3
       } else {
         const 头部列表 = 行列表[0].split(',').map(头值11 => 头值11.trim());
         const 数据行列表 = 行列表.slice(1);
-        if (头部列表.includes('IP地址') && 头部列表.includes('端口') && 头部列表.includes('数据中心')) {
-          const 地址索引10 = 头部列表.indexOf('IP地址'),
-            端口索引 = 头部列表.indexOf('端口');
-          const 备注索引 = 头部列表.indexOf('国家') > -1 ? 头部列表.indexOf('国家') : 头部列表.indexOf('城市') > -1 ? 头部列表.indexOf('城市') : 头部列表.indexOf('数据中心');
-          const 传输层安全索引 = 头部列表.indexOf('TLS');
+        if (头部列表.some(头值10 => 头值10.includes('IP')) && 头部列表.some(头值9 => 头值9.includes('端口')) && 头部列表.some(头值8 => 头值8.includes('地区') || 头值8.includes('备注') || 头值8.includes('数据中心'))) {
+          const 地址索引10 = 头部列表.findIndex(头值7 => 头值7.includes('IP'));
+          const 端口索引 = 头部列表.findIndex(头值6 => 头值6.includes('端口'));
+          const 备注索引 = 头部列表.findIndex(头值 => 头值.includes('地区') || 头值.includes('备注') || 头值.includes('数据中心'));
           数据行列表.forEach(行9 => {
-            const 列列表8 = 行9.split(',').map(丙值7 => 丙值7.trim());
-            if (传输层安全索引 !== -1 && 列列表8[传输层安全索引]?.toLowerCase() !== 'true') return;
+            const 列列表8 = 行9.split(',').map(乙值 => 乙值.trim());
             const 包裹地址6 = 六版地址模式.test(列列表8[地址索引10]) ? `[${列列表8[地址索引10]}]` : 列列表8[地址索引10];
             结果列表.add(`${包裹地址6}:${列列表8[端口索引]}#${列列表8[备注索引]}`);
           });
@@ -5641,5 +5550,11 @@ async function 获取优选接口(网址列表, 默认端口 = '443', 超时 = 3
       }
     } catch (事件值) {}
   }));
-  return Array.from(结果列表);
+  const 最终列表 = Array.from(结果列表);
+  if (最终列表.length > 0) {
+    优选接口缓存.set(缓存键, { data: 最终列表, expires: 现在 + 优选接口缓存时长 });
+  } else if (缓存项) {
+    return 缓存项.data;
+  }
+  return 最终列表;
 }
