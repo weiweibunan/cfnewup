@@ -57,10 +57,10 @@ const 配置默认值 = {
   customECHDomain: 'cloudflare-ech.com',
   alpn: '',
   d: '',
-  p: '107.172.138.49:40000',
+  p: '',
   yx: '',
   yxURL: '',
-  s: 'socks5://107.172.138.49:40000',
+  s: '',
   homepage: '',
   scu: 解码64('aHR0cHM6Ly91cmwudjEubWsvc3Vi'),
   ena: 'no',
@@ -69,7 +69,7 @@ const 配置默认值 = {
   egi: 'yes',
   ae: '',
   rm: '',
-  qj: 'no',
+  qj: '',
   dkby: 'no',
   yxby: '',
   ipv4: 'yes',
@@ -3037,8 +3037,6 @@ async function 处理值值384(地址类型383, 主机, 端口数字, 原始数�
       关闭套接字值(网页套接字382);
     }
   }
-  try {
-    // 首跳是否走代理
   try {
     // 首跳是否走代理：只走代理 → 必走；优先直连 → 不走；其余按代理是否配置
     const 首跳走代理 = 仅走代理 && 实际代理已启用 ? true : 启用代理降级 ? false : 实际代理已启用;
