@@ -2896,6 +2896,14 @@ async function 连接值279(远程套接字, 网页套接字278, 头部数据, �
       读取器273 = 远程套接字.readable.getReader();
     }
     for (;;) {
+      if (网页套接字278.readyState !== 1) break;
+      if (网页套接字278.bufferedAmount > 512 * 1024) {
+        let 等待次数 = 0;
+        while (网页套接字278.bufferedAmount > 128 * 1024 && 网页套接字278.readyState === 1 && 等待次数 < 500) {
+          await new Promise(解决 => setTimeout(解决, 10));
+          等待次数++;
+        }
+      }
       const 结果269 = 本地值272 ? await 读取器273.read(new Uint8Array(缓冲271, 0, 传输块大小)) : await 读取器273.read();
       if (结果269.done) break;
       const 读取值 = 结果269.value;
