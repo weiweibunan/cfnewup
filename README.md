@@ -34,7 +34,7 @@ GrainTCP 是 TCP relay，因此本版本只接受 VLESS TCP 命令；旧版本�
 
 ## 开发与验证
 
-需要 Node.js 20 或更高版本，无第三方构建依赖。
+需要 Node.js 20 或更高版本；构建依赖由 `package-lock.json` 固定，首次使用先运行 `npm install`。
 
 ```sh
 npm run build
@@ -48,7 +48,7 @@ npm run check
 | `scripts/build.mjs` | 生成可直接部署的 `_worker.js` |
 | `tests/` | Grain 合包、BYOB、大包直发、竞速、代理及 Pages 入口回归测试 |
 
-修改 `src/` 后必须重新生成并提交 `_worker.js`。CI 会验证产物一致性、语法和回归测试。
+修改 `src/` 后，CI 会验证语法与回归测试，并将确定性的 `_worker.js` 部署产物提交到当前功能分支。
 
 部署产物的混淆只提高直接阅读门槛，不属于加密；可维护源码始终保留在 `src/`，运行时秘密必须继续使用 Cloudflare 环境变量或 KV。
 
