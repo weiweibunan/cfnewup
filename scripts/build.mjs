@@ -33,7 +33,7 @@ const result = await minify(source, {
   sourceMap: false
 });
 if (!result.code) throw new Error('Terser produced an empty deployment bundle');
-const notice = '/*! cfnewup GrainTCP build; derived from ToiCF/GrainTCP; GPL-3.0-only */\n';
+const notice = '/*! cfnewup GrainTCP v4.1; derived from ToiCF/GrainTCP; GPL-3.0-only */\n';
 const bundle = notice + result.code + '\n';
 const output = resolve(root, '_worker.js');
 if (process.argv.includes('--check')) {
