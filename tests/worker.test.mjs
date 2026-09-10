@@ -32,6 +32,15 @@ function runtime(options = {}) {
 const env = { u: TOKEN, epd: 'no', epi: 'no', egi: 'no', ena: 'yes' };
 const request = path => new Request('https://review.invalid' + path);
 
+test('missing UUID environment variable fails closed', async () => {
+  const { worker, pairs, sockets } = runtime();
+  const response = await worker.fetch(request('/'), {});
+  assert.equal(response.status, 503);
+  assert.equal(await response.text(), 'Missing or invalid U environment variable');
+  assert.equal(pairs.length, 0);
+  assert.equal(sockets.length, 0);
+});
+
 test('generated Pages worker serves homepage and exact UUID routes', async () => {
   const { worker } = runtime();
   assert.equal((await worker.fetch(request('/'), env)).status, 200);
@@ -41,6 +50,20 @@ test('generated Pages worker serves homepage and exact UUID routes', async () =>
   assert.equal(sub.status, 200);
   assert.match(sub.headers.get('Content-Type'), /yaml/);
   for (const path of ['/' + TOKEN + '/extra', '/prefix/' + TOKEN, '/' + TOKEN + '-suffix/sub']) assert.equal((await worker.fetch(request(path), env)).status, 404);
+});
+
+test('management page loads the form without rendering a raw configuration summary', async () => {
+  const { worker } = runtime();
+  const kv = { get: async () => null, put: async () => {} };
+  const page = await worker.fetch(request('/' + TOKEN), { ...env, C: kv });
+  const html = await page.text();
+  assert.doesNotMatch(html, /id=["']currentConfig["']/);
+  assert.doesNotMatch(html, /当前配置:\\n/);
+  assert.doesNotMatch(html, /当前路径:/);
+  assert.doesNotMatch(html, /访问地址:/);
+  assert.match(html, /id="safeConfigSummary"/);
+  assert.match(html, /id="safeConfigSummaryContent"/);
+  assert.match(html, /应用配置到界面\(配置\)/);
 });
 
 test('multi-segment custom path and KV path override work', async () => {

@@ -497,7 +497,7 @@ function 解码64(文本) {
   for (let 索引 = 0; 索引 < 二进制.length; 索引++) 字节[索引] = 二进制.charCodeAt(索引);
   return 基础64文本解码器.decode(字节);
 }
-let 认证令牌 = '351c9981-04b6-4103-aa4b-864aa9c91469';
+let 认证令牌 = '';
 let 回退地址 = '';
 let 代理5配置 = '';
 let 自定义优选地址列表 = [];
@@ -541,7 +541,7 @@ const 配置默认值 = {
   p: '',
   yx: '',
   yxURL: 默认优选源,
-  s: 'cfadmin88:K9xR2vP8mQ4wF7tL3bZ1@107.172.138.49:40001',
+  s: '',
   ena: 'no',
   epd: 'yes',
   epi: 'yes',
@@ -1008,7 +1008,13 @@ export default {
   async fetch(请求735, 本地值734, 本地值733) {
     try {
       await 处理值键值值(本地值734);
-      认证令牌 = (本地值734.u || 本地值734.U || 认证令牌).toLowerCase();
+      认证令牌 = String(本地值734.u || 本地值734.U || '').trim().toLowerCase();
+      if (!是否有效格式(认证令牌)) {
+        return new Response('Missing or invalid U environment variable', {
+          status: 503,
+          headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+        });
+      }
       const 本地值726 = 获取配置值('p', 本地值734.p || 本地值734.P);
       let 值自定义地址 = false;
       const 手动地区725 = 获取配置值('wk', 本地值734.wk || 本地值734.WK);
@@ -3559,11 +3565,12 @@ async function 处理订阅值(请求241, 用户240 = null) {
                                 <small style="color: #7aa9c4; font-size: 0.85rem;">${翻译值.preferredControlHint}</small>
                         </div>
                     </form>
-                    <div id="currentConfig" style="background: rgba(0, 0, 0, 0.9); border: 1px solid #00f0ff; padding: 15px; margin: 10px 0; font-family: 'Courier New', monospace; color: #00f0ff;">
-                            ${翻译值.loading}
+                    <div id="safeConfigSummary" style="background: rgba(0, 0, 0, 0.9); border: 1px solid #00f0ff; padding: 15px; margin: 10px 0; font-family: 'Courier New', monospace; color: #00f0ff;">
+                            <div style="font-weight: bold; margin-bottom: 8px; color: #00ff9d; text-shadow: 0 0 5px #00ff9d;">${是否值236 ? 'وضعیت فعلی' : '当前运行状态'}</div>
+                            <div id="safeConfigSummaryContent">${翻译值.loading}</div>
                     </div>
                     <div id="pathTypeInfo" style="background: rgba(15, 3, 40, 0.7); border: 1px solid #00f0ff; padding: 15px; margin: 10px 0; font-family: 'Courier New', monospace; color: #00f0ff;">
-                            <div style="font-weight: bold; margin-bottom: 8px; color: #00ff9d; text-shadow: 0 0 5px #00ff9d;">${翻译值.currentConfig}</div>
+                            <div style="font-weight: bold; margin-bottom: 8px; color: #00ff9d; text-shadow: 0 0 5px #00ff9d;">${是否值236 ? 'نوع مسیر' : '路径模式'}</div>
                             <div id="pathTypeStatus">${翻译值.checking}</div>
                     </div>
                 </div>
@@ -3972,7 +3979,6 @@ async function 检查键值状态() {
       // KV未配置
       document.getElementById('kvStatus').innerHTML = '<span style="color: #ffb400;">' + 翻译值20124.kvCheckFailed + '</span>';
       document.getElementById('configCard').style.display = 'block';
-      document.getElementById('currentConfig').textContent = 翻译值20124.kvNotConfigured;
     } else if (响应20133.ok) {
       try {
         const 数据20123 = await 响应20133.json();
@@ -3986,17 +3992,14 @@ async function 检查键值状态() {
         } else {
           document.getElementById('kvStatus').innerHTML = '<span style="color: #ffb400;">' + 翻译值20124.kvDisabled + '</span>';
           document.getElementById('configCard').style.display = 'block';
-          document.getElementById('currentConfig').textContent = 翻译值20124.kvNotEnabled;
         }
       } catch (数据对象错误) {
         document.getElementById('kvStatus').innerHTML = '<span style="color: #ffb400;">' + 翻译值20124.kvCheckFailed + '</span>';
         document.getElementById('configCard').style.display = 'block';
-        document.getElementById('currentConfig').textContent = 翻译值20124.kvCheckFailedFormat;
       }
     } else {
       document.getElementById('kvStatus').innerHTML = '<span style="color: #ffb400;">' + 翻译值20124.kvDisabled + '</span>';
       document.getElementById('configCard').style.display = 'block';
-      document.getElementById('currentConfig').textContent = 翻译值20124.kvCheckFailedStatus + 响应20133.status;
     }
   } catch (错误20122) {
     function 获取凭据(名称) {
@@ -4026,7 +4029,6 @@ async function 检查键值状态() {
     const 翻译值20118 = 本地值20119[是否值 ? 'fa' : 'zh'];
     document.getElementById('kvStatus').innerHTML = '<span style="color: #ffb400;">' + 翻译值20118.kvDisabled + '</span>';
     document.getElementById('configCard').style.display = 'block';
-    document.getElementById('currentConfig').textContent = 翻译值20118.kvCheckFailedError + 错误20122.message;
   }
 }
 function 读取字段值(标识) {
@@ -4103,7 +4105,27 @@ function 应用配置到界面(配置) {
   写入字段值('downgradeControl', 配置.qj);
   写入字段值('portControl', 配置.dkby);
   写入字段值('preferredControl', 配置.yxby);
+  更新安全配置摘要(配置);
   同步联动界面状态();
+}
+
+function 更新安全配置摘要(配置) {
+  const 摘要元素 = document.getElementById('safeConfigSummaryContent');
+  if (!摘要元素) return;
+  const 是否开启 = 值 => 是否开关启用(值, false);
+  const 出站模式 = 配置.qj === 'only'
+    ? '${是否值236 ? 'فقط پروکسی' : '仅代理'}'
+    : (配置.qj === 'no' ? '${是否值236 ? 'اتصال مستقیم، سپس پروکسی' : '直连优先，失败后代理'}' : '${是否值236 ? 'پیش‌فرض' : '默认'}');
+  const 项目 = [
+    ['${是否值236 ? 'منطقه' : '地区'}', 配置.wk || '${是否值236 ? 'خودکار' : '自动'}'],
+    ['ECH', 是否开启(配置.ech) ? '${是否值236 ? 'فعال' : '开启'}' : '${是否值236 ? 'غیرفعال' : '关闭'}'],
+    ['${是否值236 ? 'خروجی' : '出站'}', 出站模式],
+    ['TLS', 配置.dkby === 'yes' ? '${是否值236 ? 'فقط TLS' : '仅 TLS'}' : '${是否值236 ? 'TLS و غیر TLS' : 'TLS 与非 TLS'}'],
+    ['${是否值236 ? 'بهینه‌سازی' : '优选'}', 配置.yxby === 'yes' ? '${是否值236 ? 'غیرفعال' : '关闭'}' : '${是否值236 ? 'فعال' : '开启'}'],
+    ['IPv4', 是否开启(配置.ipv4) ? '${是否值236 ? 'فعال' : '开启'}' : '${是否值236 ? 'غیرفعال' : '关闭'}'],
+    ['IPv6', 是否开启(配置.ipv6) ? '${是否值236 ? 'فعال' : '开启'}' : '${是否值236 ? 'غیرفعال' : '关闭'}']
+  ];
+  摘要元素.textContent = 项目.map(([名称, 值]) => 名称 + ': ' + 值).join(' · ');
 }
 
 function 收集界面配置() {
@@ -4150,51 +4172,29 @@ async function 加载当前配置() {
   try {
     const 响应20116 = await fetch(接口网址20117);
     if (响应20116.status === 503) {
-      document.getElementById('currentConfig').textContent = 'KV存储未配置，无法加载配置';
+      显示状态('KV存储未配置，无法加载配置', 'error');
       return;
     }
     if (!响应20116.ok) {
       const 错误文本20115 = await 响应20116.text();
-      document.getElementById('currentConfig').textContent = '加载配置失败: ' + 错误文本20115;
+      显示状态('加载配置失败: ' + 错误文本20115, 'error');
       return;
     }
     const 配置 = await 响应20116.json();
-
-    // 过滤掉内部字段 kvEnabled
-    const 显示配置 = {};
-    for (const [键20114, 值20113] of Object.entries(配置)) {
-      if (键20114 !== 'kvEnabled') {
-        显示配置[键20114] = 值20113;
-      }
-    }
-    let 配置文本 = '当前配置:\\n';
-    if (Object.keys(显示配置).length === 0) {
-      配置文本 += '(暂无配置)';
-    } else {
-      for (const [键, 值20112] of Object.entries(显示配置)) {
-        配置文本 += 键 + ': ' + (值20112 || '(未设置)') + '\\n';
-      }
-    }
-    document.getElementById('currentConfig').textContent = 配置文本;
-
     应用配置到界面(配置);
   } catch (错误20111) {
-    document.getElementById('currentConfig').textContent = '加载配置失败: ' + 错误20111.message;
+    显示状态('加载配置失败: ' + 错误20111.message, 'error');
   }
 }
 
 // 更新路径类型显示
 function 更新路径类型状态(自定义路径) {
   const 路径类型状态 = document.getElementById('pathTypeStatus');
-  const 当前网址20110 = window.location.href;
-  const 路径部分列表 = window.location.pathname.split('/').filter(参数值20109 => 参数值20109);
-  const 当前路径 = 路径部分列表.length > 0 ? 路径部分列表[0] : '';
+  if (!路径类型状态) return;
   if (自定义路径 && 自定义路径.trim()) {
-    // 使用自定义路径 (d)
-    路径类型状态.innerHTML = '<div style="color: #00ff9d;">使用类型: <strong>自定义路径 (d)</strong></div>' + '<div style="margin-top: 5px; color: #00f0ff;">当前路径: <span style="color: #ffb400;">' + 自定义路径 + '</span></div>' + '<div style="margin-top: 5px; font-size: 0.9rem; color: #7aa9c4;">访问地址: ' + (当前网址20110.split('/')[0] + '//' + 当前网址20110.split('/')[2]) + 自定义路径 + '/sub</div>';
+    路径类型状态.textContent = '${是否值236 ? 'مسیر سفارشی' : '自定义路径模式'}';
   } else {
-    // 使用 UUID (u)
-    路径类型状态.innerHTML = '<div style="color: #00ff9d;">使用类型: <strong>UUID 路径 (u)</strong></div>' + '<div style="margin-top: 5px; color: #00f0ff;">当前路径: <span style="color: #ffb400;">' + (当前路径 || '(UUID)') + '</span></div>' + '<div style="margin-top: 5px; font-size: 0.9rem; color: #7aa9c4;">访问地址: ' + 当前网址20110.split('/sub')[0] + '/sub</div>';
+    路径类型状态.textContent = '${是否值236 ? 'مسیر UUID' : 'UUID 路径模式'}';
   }
 }
 
