@@ -26,7 +26,10 @@ function runtime(options = {}) {
     连接(target) { const socket = mockSocket(); sockets.push({ target, socket }); return socket; },
     ...options
   });
-  vm.runInContext(bundle.replace(/^import .* from 'cloudflare:sockets';\n/m, '').replace('export default {', 'globalThis.worker = {'), context);
+  const executable = bundle
+    .replace(/import\s*\{\s*connect\s+as\s+([^\s}]+)\s*\}\s*from\s*["']cloudflare:sockets["'];?/, 'const $1=globalThis.连接;')
+    .replace(/export\s+default\s*/, 'globalThis.worker=');
+  vm.runInContext(executable, context);
   return { context, worker: context.worker, pairs, sockets };
 }
 const env = { u: TOKEN, epd: 'no', epi: 'no', egi: 'no', ena: 'yes' };

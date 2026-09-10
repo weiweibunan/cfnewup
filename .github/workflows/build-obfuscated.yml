@@ -1,0 +1,39 @@
+name: Build obfuscated Pages worker
+
+on:
+  push:
+    branches:
+      - feat/full-graintcp
+    paths:
+      - 'src/**'
+      - 'scripts/build.mjs'
+      - 'package.json'
+      - '.github/workflows/build-obfuscated.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/full-graintcp
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts
+      - run: npm run build
+      - run: npm run check
+      - name: Commit deterministic deployment bundle
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add _worker.js package-lock.json
+          if git diff --cached --quiet; then
+            echo "Deployment bundle is already current"
+          else
+            git commit -m "build: generate obfuscated Pages worker"
+            git push origin HEAD:feat/full-graintcp
+          fi

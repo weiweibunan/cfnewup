@@ -11,6 +11,7 @@ Cloudflare Pages 上的 VLESS over WebSocket 代理与订阅管理。本版本�
 - 同一路由默认并发发起 4 次 TCP 建连，保留最先成功的 socket 并关闭其余连接。
 - WebSocket 使用 `allowHalfOpen`，固定二进制消息为 `arraybuffer`，关闭压缩扩展协商。
 - UUID 在配置变化时预解码并缓存，请求热路径使用固定位置比较。
+- `_worker.js` 使用固定版本 Terser 进行顶层与局部变量改名、三轮安全压缩，不生成 source map；仅保留 GPL 来源声明。
 
 GrainTCP 是 TCP relay，因此本版本只接受 VLESS TCP 命令；旧版本的 UDP/DNS 中继、上传重放、首字节重试和旧传输超时状态机均已删除，没有兼容残留。
 
@@ -48,6 +49,8 @@ npm run check
 | `tests/` | Grain 合包、BYOB、大包直发、竞速、代理及 Pages 入口回归测试 |
 
 修改 `src/` 后必须重新生成并提交 `_worker.js`。CI 会验证产物一致性、语法和回归测试。
+
+部署产物的混淆只提高直接阅读门槛，不属于加密；可维护源码始终保留在 `src/`，运行时秘密必须继续使用 Cloudflare 环境变量或 KV。
 
 ## 开源许可
 

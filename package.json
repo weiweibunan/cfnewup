@@ -8,5 +8,8 @@
     "build:check": "node scripts/build.mjs --check",
     "test": "node --test tests/*.test.mjs",
     "check": "npm run build:check && node --check _worker.js && npm test"
+  },
+  "devDependencies": {
+    "terser": "5.51.2"
   }
 }
