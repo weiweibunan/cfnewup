@@ -624,8 +624,8 @@ export default {
       优选地址源 = 获取配置文本值('yxURL', 配置默认值.yxURL, 本地值734.yxURL || 本地值734.YXURL) || 默认优选源;
       自定义路径 = 获取配置文本值('d', 配置默认值.d, 本地值734.d || 本地值734.D);
       const 网址698 = new URL(请求735.url);
-      const 管理基础路径 = '/' + (自定义路径 && 自定义路径.trim() ? 自定义路径.trim() : 认证令牌).replace(/^\/+|\/+$/g, '');
-      const 管理请求路径 = 网址698.pathname.replace(/\/+$/, '') || '/';
+      const 管理基础路径 = ('/' + (自定义路径 && 自定义路径.trim() ? 自定义路径.trim() : 认证令牌)).replace(/\/+/g, '/').replace(/\/+$/, '') || '/';
+      const 管理请求路径 = 网址698.pathname.replace(/\/+/g, '/').replace(/\/+$/, '') || '/';
       if (管理请求路径 === 管理基础路径 + '/api/config') return await 处理配置接口(请求735, 本地值734);
       if (管理请求路径 === 管理基础路径 + '/api/preferred-ips') return await 处理优选地址列表接口(请求735);
       if ((请求735.headers.get('Upgrade') || '').toLowerCase() === 'websocket') {
@@ -3436,8 +3436,12 @@ function 创建矩阵雨() {
 }
 
 // 配置管理相关函数
+function 获取配置接口网址() {
+  const 页面路径 = window.location.pathname.replace(/\\/+$/, '');
+  return (页面路径 || '') + '/api/config';
+}
 async function 检查键值状态() {
-  const 接口网址20134 = window.location.pathname + '/api/config';
+  const 接口网址20134 = 获取配置接口网址();
   try {
     const 响应20133 = await fetch(接口网址20134);
     function 获取凭据20132(名称20131) {
@@ -3479,7 +3483,7 @@ async function 检查键值状态() {
     const 翻译值20124 = 本地值20125[是否值20126 ? 'fa' : 'zh'];
     if (响应20133.status === 503) {
       // KV未配置
-      document.getElementById('kvStatus').innerHTML = '<span style="color: #ffb400;">' + 翻译值20124.kvDisabled + '</span>';
+      document.getElementById('kvStatus').innerHTML = '<span style="color: #ffb400;">' + 翻译值20124.kvCheckFailed + '</span>';
       document.getElementById('configCard').style.display = 'block';
       document.getElementById('currentConfig').textContent = 翻译值20124.kvNotConfigured;
     } else if (响应20133.ok) {
@@ -3655,7 +3659,7 @@ function 收集界面配置() {
 }
 
 async function 加载当前配置() {
-  const 接口网址20117 = window.location.pathname + '/api/config';
+  const 接口网址20117 = 获取配置接口网址();
   try {
     const 响应20116 = await fetch(接口网址20117);
     if (响应20116.status === 503) {
@@ -3738,7 +3742,7 @@ function 更新工作器地区状态() {
   }
 }
 async function 保存配置(配置数据20107) {
-  const 接口网址 = window.location.pathname + '/api/config';
+  const 接口网址 = 获取配置接口网址();
   try {
     const 响应20106 = await fetch(接口网址, {
       method: 'POST',
@@ -3798,7 +3802,7 @@ function 显示状态(消息20100, 类型20099) {
 async function 重置全部配置() {
   if (confirm('确定要重置所有配置吗？这将清空所有KV配置，恢复为环境变量设置。')) {
     try {
-      const 响应20098 = await fetch(window.location.pathname + '/api/config', {
+      const 响应20098 = await fetch(获取配置接口网址(), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -4684,4 +4688,3 @@ async function 获取优选接口(网址列表, 默认端口 = '443', 超时 = 3
   }
   return 最终列表;
 }
-

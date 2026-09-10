@@ -55,6 +55,29 @@ test('multi-segment custom path and KV path override work', async () => {
   assert.equal((await plain.worker.fetch(request('/foo/bar/'), { ...env, d: 'foo/bar' })).status, 200);
 });
 
+test('trailing and repeated slashes do not break the KV configuration endpoint', async () => {
+  const { worker } = runtime();
+  const kv = { get: async () => null, put: async () => {} };
+  const configured = { ...env, C: kv };
+  const page = await worker.fetch(request('/' + TOKEN + '/'), configured);
+  assert.equal(page.status, 200);
+  const html = await page.text();
+  assert.ok(html.includes('function 获取配置接口网址()'));
+  assert.ok(!html.includes("window.location.pathname + '/api/config'"));
+  const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)].map(match => match[1]);
+  assert.ok(scripts.length > 0);
+  for (const script of scripts) assert.doesNotThrow(() => new Function(script));
+  for (const path of [
+    '/' + TOKEN + '/api/config',
+    '/' + TOKEN + '//api/config',
+    '//' + TOKEN + '///api/config/'
+  ]) {
+    const response = await worker.fetch(request(path), configured);
+    assert.equal(response.status, 200, path);
+    assert.equal((await response.json()).kvEnabled, true);
+  }
+});
+
 test('KV write failure returns failure and does not mutate saved memory config', async () => {
   const { worker, context } = runtime();
   const kv = { get: async key => key === 'c' ? JSON.stringify({ wk: 'JP' }) : 'v1', put: async () => { throw new Error('simulated quota error'); } };
