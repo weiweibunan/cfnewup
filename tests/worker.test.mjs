@@ -105,12 +105,13 @@ test('trailing and repeated slashes do not break the KV configuration endpoint',
 });
 
 test('KV write failure returns failure and does not mutate saved memory config', async () => {
-  const { worker, context } = runtime();
+  const { worker } = runtime();
   const kv = { get: async key => key === 'c' ? JSON.stringify({ wk: 'JP' }) : 'v1', put: async () => { throw new Error('simulated quota error'); } };
   const response = await worker.fetch(new Request('https://review.invalid/' + TOKEN + '/api/config', { method: 'POST', body: JSON.stringify({ wk: 'SG' }) }), { ...env, C: kv });
   assert.equal(response.status, 500);
   assert.equal((await response.json()).success, false);
-  assert.equal(vm.runInContext('键值配置.wk', context), 'JP');
+  const current = await worker.fetch(request('/' + TOKEN + '/api/config'), { ...env, C: kv });
+  assert.equal((await current.json()).wk, 'JP');
 });
 
 test('KV successful save preserves c schema and returns actual saved config', async () => {
@@ -141,10 +142,11 @@ test('custom domain port survives subscription conversion', async () => {
 });
 
 test('empty custom address config clears prior isolate list', async () => {
-  const { worker, context } = runtime();
-  await worker.fetch(request('/'), { ...env, yx: '192.0.2.1' });
-  await worker.fetch(request('/'), env);
-  assert.equal(vm.runInContext('自定义优选地址列表.length', context), 0);
+  const { worker } = runtime();
+  const isolated = { ...env, ena: 'no', epd: 'no', epi: 'no', egi: 'no' };
+  await worker.fetch(request('/'), { ...isolated, yx: 'stale-node.example' });
+  const response = await worker.fetch(request('/' + TOKEN + '/sub'), isolated);
+  assert.doesNotMatch(atob(await response.text()), /stale-node\.example/);
 });
 
 test('upgrade uses new session with captured per-connection UUID and cleanup', async () => {
