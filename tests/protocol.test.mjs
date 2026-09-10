@@ -1,26 +1,26 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseTunnelHeader, parseProxyAddress, encodeSocksDestination, decodeEarlyData, tunnelBytes } from '../src/protocol.js';
+import { parseGrainHeader, parseProxyAddress, encodeSocksDestination, decodeGrainEarlyData, toGrainBytes } from '../src/graintcp.js';
 import { TOKEN, packet } from './helpers.mjs';
 
 test('header can be split at every byte boundary', () => {
   const input = packet([7, 8], { type: 2, host: 'example.test' });
-  const expected = parseTunnelHeader(input, TOKEN);
-  for (let i = 0; i < expected.offset; i++) assert.equal(parseTunnelHeader(input.subarray(0, i), TOKEN), null);
+  const expected = parseGrainHeader(input, TOKEN);
+  for (let i = 0; i < expected.offset; i++) assert.equal(parseGrainHeader(input.subarray(0, i), TOKEN), null);
   assert.equal(expected.hostname, 'example.test');
   assert.deepEqual([...input.subarray(expected.offset)], [7, 8]);
 });
-test('rejects wrong UUID, unknown command, invalid port and non-DNS UDP', () => {
-  assert.throws(() => parseTunnelHeader(packet(), '22222222-2222-4222-8222-222222222222'));
+test('rejects wrong UUID, UDP, unknown command and invalid port', () => {
+  assert.throws(() => parseGrainHeader(packet(), '22222222-2222-4222-8222-222222222222'));
   const invalid = packet(); invalid[18] = 3;
-  assert.throws(() => parseTunnelHeader(invalid, TOKEN));
-  assert.throws(() => parseTunnelHeader(packet([], { port: 0 }), TOKEN));
-  assert.throws(() => parseTunnelHeader(packet([], { udp: true, port: 443 }), TOKEN));
+  assert.throws(() => parseGrainHeader(invalid, TOKEN));
+  assert.throws(() => parseGrainHeader(packet([], { port: 0 }), TOKEN));
+  assert.throws(() => parseGrainHeader(packet([], { udp: true }), TOKEN), /TCP only/);
 });
 test('parses IPv6 header and minimal one-character domain', () => {
-  const result = parseTunnelHeader(packet([], { host: [...Array(15).fill(0), 1], type: 3 }), TOKEN);
+  const result = parseGrainHeader(packet([], { host: [...Array(15).fill(0), 1], type: 3 }), TOKEN);
   assert.equal(result.hostname, '0:0:0:0:0:0:0:1');
-  assert.equal(parseTunnelHeader(packet([], { type: 2, host: 'a' }), TOKEN).hostname, 'a');
+  assert.equal(parseGrainHeader(packet([], { type: 2, host: 'a' }), TOKEN).hostname, 'a');
 });
 test('proxy URL preserves encoded credentials and normalizes IPv6', () => {
   const proxy = parseProxyAddress('socks5://user:p%40ss%3Aword@[2001:db8::1]:1080');
@@ -42,6 +42,6 @@ test('SOCKS destination types use binary IPv4/IPv6 and byte-counted domains', ()
 });
 test('early data round trips base64url and rejects non-binary messages', () => {
   const value = packet([1, 2, 3]);
-  assert.deepEqual(decodeEarlyData(Buffer.from(value).toString('base64url')), value);
-  assert.throws(() => tunnelBytes('text frame'));
+  assert.deepEqual(decodeGrainEarlyData(Buffer.from(value).toString('base64url')), value);
+  assert.throws(() => toGrainBytes('text frame'));
 });

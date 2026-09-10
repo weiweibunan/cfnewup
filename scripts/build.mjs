@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const modules = ['src/protocol.js', 'src/transport.js', 'src/worker.js'];
+const modules = ['src/graintcp.js', 'src/worker.js'];
 const parts = [];
 for (const name of modules) {
   let source = await readFile(resolve(root, name), 'utf8');

@@ -22,7 +22,7 @@ export class MockWebSocket {
   sent = [];
   closeCalls = [];
   addEventListener(name, callback) { this.events[name] = callback; }
-  accept() {}
+  accept(options) { this.acceptOptions = options; }
   send(bytes) { assert.equal(this.readyState, 1); this.sent.push([...bytes]); }
   close(code, reason) { this.closeCalls.push({ code, reason }); this.readyState = 3; }
   message(bytes) { this.events.message({ data: bytes }); }
@@ -36,7 +36,7 @@ export function mockSocket({ onWrite, opened } = {}) {
     writes: [], closeCalls: 0,
     opened: opened || Promise.resolve({}),
     closed: completion.promise,
-    readable: new ReadableStream({ start(value) { controller = value; } }),
+    readable: new ReadableStream({ type: 'bytes', start(value) { controller = value; } }),
     writable: new WritableStream({ write(bytes) { socket.writes.push([...bytes]); return onWrite?.(bytes, socket); } }),
     data(bytes) { controller.enqueue(new Uint8Array(bytes)); },
     eof() { if (!ended) { ended = true; controller.close(); completion.resolve(); } },

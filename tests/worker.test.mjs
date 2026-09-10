@@ -11,7 +11,7 @@ function runtime(options = {}) {
   const context = vm.createContext({
     TextEncoder, TextDecoder, Uint8Array, ArrayBuffer, DataView,
     URL, URLSearchParams, Request, Headers, ReadableStream, WritableStream,
-    AbortController, atob, btoa, setTimeout, clearTimeout,
+    AbortController, atob, btoa, setTimeout, clearTimeout, queueMicrotask,
     console: { log() {}, error() {} },
     fetch: async () => { throw new Error('Unexpected external network request in regression test'); },
     Response: class extends Response {

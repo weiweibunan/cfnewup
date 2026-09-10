@@ -1,8 +1,7 @@
-// CFnew - 终端 v3.0
-// 版本: v3.0 
+// CFnew - GrainTCP v4.1
+// 版本: v4.1-graintcp
 import { connect as 连接 } from 'cloudflare:sockets';
-import { TunnelSession } from './transport.js';
-import { parseProxyAddress } from './protocol.js';
+import { createGrainWebSocketResponse, parseProxyAddress } from './graintcp.js';
 const 基础64文本解码器 = new TextDecoder();
 function 解码64(文本) {
   const 二进制 = atob(文本);
@@ -237,51 +236,9 @@ const 直连域名列表 = [{
 }, {
   domain: "xn--b6gac.eu.org"
 }];
-const 错误_无效数据 = atob('aW52YWxpZCBkYXRh');
-const 错误_无效用户 = atob('aW52YWxpZCB1c2Vy');
-const 错误_不支持命令 = atob('Y29tbWFuZCBpcyBub3Qgc3VwcG9ydGVk');
-const 错误_仅支持域名系统用户数据报 = atob('VURQIHByb3h5IG9ubHkgZW5hYmxlIGZvciBETlMgd2hpY2ggaXMgcG9ydCA1Mw==');
-const 错误_无效地址类型 = atob('aW52YWxpZCBhZGRyZXNzVHlwZQ==');
-const 错误_空地址 = atob('YWRkcmVzc1ZhbHVlIGlzIGVtcHR5');
-const 错误_网页套接字未打开 = atob('d2ViU29ja2V0LmVhZHlTdGF0ZSBpcyBub3Qgb3Blbg==');
 const 错误_无效标识字符串 = atob('U3RyaW5naWZpZWQgaWRlbnRpZmllciBpcyBpbnZhbGlk');
-const 错误_无效代理地址 = atob('SW52YWxpZCBTT0NLUyBhZGRyZXNzIGZvcm1hdA==');
-const 错误_代理无可用方法 = atob('bm8gYWNjZXB0YWJsZSBtZXRob2Rz');
-const 错误_代理需要认证 = atob('c29ja3Mgc2VydmVyIG5lZWRzIGF1dGg=');
-const 错误_代理认证失败 = atob('ZmFpbCB0byBhdXRoIHNvY2tzIHNlcnZlcg==');
-const 错误_代理连接失败 = atob('ZmFpbCB0byBvcGVuIHNvY2tzIGNvbm5lY3Rpb24=');
-const 错误_代理隧道失败 = atob('ZmFpbCB0byBvcGVuIHByb3h5IHR1bm5lbA==');
-const 错误_代理响应异常 = atob('aW52YWxpZCBwcm94eSByZXNwb25zZQ==');
-const 前缀_套接字5 = atob('c29ja3M1Oi8v');
-const 前缀_套接字 = atob('c29ja3M6Ly8=');
-const 前缀_超文本 = atob('aHR0cDovLw==');
-const 前缀_安全超文本 = atob('aHR0cHM6Ly8=');
-const 文本_连接方法 = atob('Q09OTkVDVA==');
-const 文本_协议版本 = atob('IEhUVFAvMS4x');
-const 文本_主机头 = atob('SG9zdDog');
-const 文本_代理认证头 = atob('UHJveHktQXV0aG9yaXphdGlvbjogQmFzaWMg');
-const 文本_代理保持 = atob('UHJveHktQ29ubmVjdGlvbjogS2VlcC1BbGl2ZQ==');
-const 文本_用户代理头 = atob('VXNlci1BZ2VudDogTW96aWxsYS81LjA=');
-const 文本_换行 = atob('DQo=');
-const 文本_响应前缀 = atob('SFRUUC8=');
-const 代理种类_套接字5 = 'p5';
-const 代理种类_隧道 = 'pt';
-const 代理种类_安全隧道 = 'pts';
 let 已解析代理5配置 = {};
 let 是否代理已启用 = false;
-const 地址类型_四版 = 1;
-const 地址类型_网址 = 2;
-const 地址类型_六版 = 3;
-const 传输块大小 = 64 * 1024;
-const 传输下载包大小 = 32 * 1024;
-const 传输下载尾部 = 512;
-const 传输下载延迟 = 0;
-const 传输上传包大小 = 16 * 1024;
-const 传输上传队列上限 = 256 * 1024;
-const 传输连接竞速数 = 1;
-const 首字节超时 = 1200;
-const 共享解码器 = new TextDecoder();
-const 唯一标识字节缓存 = new Map();
 const 用户UUID正则 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const IPv4正则 = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
 const IPv6正则 = /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
@@ -666,8 +623,8 @@ export default {
           const 语言值661 = 是否值664 ? 'fa-IR' : 'zh-CN';
           const 本地值660 = {
             zh: {
-              title: '终端 v3.0',
-              terminal: '终端 v3.0',
+              title: 'GrainTCP v4.1',
+              terminal: 'GrainTCP v4.1',
               congratulations: '恭喜你来到这',
               enterU: '请输入你U变量的值',
               enterD: '请输入你D变量的值',
@@ -683,8 +640,8 @@ export default {
               reenter: '请重新输入有效的UUID'
             },
             fa: {
-              title: 'ترمینال v3.0',
-              terminal: 'ترمینال v3.0',
+              title: 'GrainTCP v4.1',
+              terminal: 'GrainTCP v4.1',
               congratulations: 'تبریک می‌گوییم به شما',
               enterU: 'لطفا مقدار متغیر U خود را وارد کنید',
               enterD: 'لطفا مقدار متغیر D خود را وارد کنید',
@@ -2284,11 +2241,7 @@ async function 处理网页套接字请求(请求) {
     connect: (目标, 设置) => 请求.fetcher && typeof 请求.fetcher.connect === 'function'
       ? 请求.fetcher.connect(目标, 设置) : 连接(目标, 设置)
   };
-  const [客户端, 服务端] = Object.values(new WebSocketPair());
-  服务端.binaryType = 'arraybuffer';
-  服务端.accept();
-  new TunnelSession(服务端, 选项);
-  return new Response(null, { status: 101, webSocket: 客户端 });
+  return createGrainWebSocketResponse(请求, 选项).response;
 }
 function 解析代理配置(地址) {
   return parseProxyAddress(地址);
@@ -2401,7 +2354,7 @@ async function 处理订阅值(请求241, 用户240 = null) {
         FI: '🇫🇮 芬兰',
         GB: '🇬🇧 英国'
       },
-      terminal: '终端 v3.0',
+      terminal: 'GrainTCP v4.1',
       autoDetectClient: '自动识别',
       customIPDisabledHint: 解码64('5L2/55So6Ieq5a6a5LmJUHJveHlJUOaXtu+8jOWcsOWMuumAieaLqeW3suemgeeUqA=='),
       kvNotConfigured: 'KV存储未配置，无法使用配置管理功能。\\n\\n请在Cloudflare Workers中:\\n1. 创建KV命名空间\\n2. 绑定环境变量 C\\n3. 重新部署代码',
@@ -2490,7 +2443,7 @@ async function 处理订阅值(请求241, 用户240 = null) {
         FI: '🇫🇮 فنلاند',
         GB: '🇬🇧 بریتانیا'
       },
-      terminal: 'ترمینال v3.0',
+      terminal: 'GrainTCP v4.1',
       autoDetectClient: 'تشخیص خودکار',
       customIPDisabledHint: 解码64('2YfZhtqv2KfZhSDYp9iz2KrZgdin2K/ZhyDYp9iyIFByb3h5SVAg2LPZgdin2LHYtNuM2Iwg2KfZhtiq2K7Yp9ioINmF2YbYt9mC2Ycg2LrbjNix2YHYudin2YQg2KfYs9iq'),
       kvNotConfigured: 'ذخیره‌سازی KV پیکربندی نشده است، نمی‌توانید از عملکرد مدیریت تنظیمات استفاده کنید.\\n\\nلطفا در Cloudflare Workers:\\n1. فضای نام KV ایجاد کنید\\n2. متغیر محیطی C را پیوند دهید\\n3. کد را دوباره مستقر کنید',
